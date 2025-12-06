@@ -37,21 +37,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-
-    /* 💬 자막 터치 레이어: 화면 아래쪽 자막 영역 */
-    #subtitle-touch-layer {
-      position: absolute;
-      left: 0;
-      right: 0;
-      /* 컨트롤바 + 자막 높이 고려해서 대략 이 정도 */
-      bottom: 12%;
-      height: 30%;
-      z-index: 2;
-      pointer-events: auto;
-      /* 디버깅용
-      background: rgba(0, 255, 0, 0.1);
-      */
+      background: black;
     }
 
     #uploader {
@@ -106,9 +92,6 @@
         default
       />
     </video>
-
-    <!-- 자막 홀드/해제 영역 -->
-    <div id="subtitle-touch-layer"></div>
   </div>
 
   <div id="uploader">
