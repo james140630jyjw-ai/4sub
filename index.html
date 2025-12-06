@@ -21,50 +21,44 @@
       margin-bottom: 16px;
     }
 
-    /* 🎥 16:9 비율 유지 */
+    /* 🎥 16:9 영상 영역 */
     .video-wrapper {
       position: relative;
       width: 90%;
       max-width: 800px;
       aspect-ratio: 16 / 9;
-      background: black;
       border-radius: 12px 12px 0 0;
       overflow: hidden;
+      background: black;
     }
 
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
       background: black;
     }
 
-    /* 브라우저 기본 자막은 안 보이게 숨김 (우리는 직접 그릴 거라서) */
-    video::cue {
-      visibility: hidden;
-    }
+    /* ❗ Safari 자막이 사라지는 문제 해결: video::cue 삭제 */
 
-    /* 💬 영상 아래 자막 바 (여기를 눌러서 언어 전환) */
+    /* 💬 영상 아래 자막 표시 바 */
     #subtitle-bar {
       width: 90%;
       max-width: 800px;
       min-height: 2.4em;
       background: #000;
       border-radius: 0 0 12px 12px;
-      margin-top: 0;
       padding: 6px 12px;
-      box-sizing: border-box;
+      text-align: center;
+      font-size: 1rem;
+      line-height: 1.3;
+      color: #fff;
+      text-shadow: 0 0 4px #000;
+      user-select: none;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      font-size: 1rem;
-      line-height: 1.4;
-      color: #fff;
-      text-shadow: 0 0 4px #000, 0 0 8px #000;
-      cursor: pointer; /* 여기를 누른다는 힌트 */
-      user-select: none;
     }
 
     #subtitle-bar span {
@@ -79,15 +73,15 @@
       color: #aaa;
     }
 
+    /* 업로드 영역 */
     #uploader {
-      margin-top: 16px;
-      padding: 16px;
+      margin-top: 20px;
       background: #222;
-      border-radius: 10px;
+      padding: 16px;
       width: 90%;
       max-width: 800px;
+      border-radius: 10px;
       box-sizing: border-box;
-      font-size: 14px;
     }
 
     #uploader h2 {
@@ -100,7 +94,7 @@
       margin: 6px 0 2px;
     }
 
-    #uploader input[type="file"] {
+    #uploader input {
       width: 100%;
       margin-bottom: 8px;
     }
@@ -114,39 +108,28 @@
     <video id="video" controls>
       <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-      <!-- 데이터용 트랙 (우리가 읽어서 직접 그림) -->
-      <track
-        id="track-en"
-        label="English"
-        kind="subtitles"
-        srclang="en"
-        src="sample/sample_en.vtt"
-      />
-      <track
-        id="track-ko"
-        label="Korean"
-        kind="subtitles"
-        srclang="ko"
-        src="sample/sample_ko.vtt"
-      />
+      <!-- 브라우저 기본 자막 렌더링용 -->
+      <track id="track-en" label="English" kind="subtitles" srclang="en" src="sample/sample_en.vtt">
+      <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt">
     </video>
   </div>
 
-  <!-- 영상 아래 자막 표시 + 홀드 영역 -->
+  <!-- 영상 아래 자막 바 -->
   <div id="subtitle-bar"><span></span></div>
-  <div id="hint">자막 줄을 꾹 누르면 영어, 떼면 한국어로 돌아옵니다.</div>
+  <div id="hint">자막 줄을 꾹 누르면 영어, 떼면 한국어</div>
 
+  <!-- 업로드 영역 -->
   <div id="uploader">
     <h2>Use Your Own Video / Subtitles</h2>
 
-    <label for="upload-video">🎬 Upload Video</label>
-    <input type="file" id="upload-video" accept="video/*" />
+    <label>🎬 Upload Video</label>
+    <input type="file" id="upload-video" accept="video/*">
 
-    <label for="upload-en">🇺🇸 Upload English Subtitle (.vtt)</label>
-    <input type="file" id="upload-en" accept=".vtt" />
+    <label>🇺🇸 Upload English Subtitle (.vtt)</label>
+    <input type="file" id="upload-en" accept=".vtt">
 
-    <label for="upload-ko">🇰🇷 Upload Korean Subtitle (.vtt)</label>
-    <input type="file" id="upload-ko" accept=".vtt" />
+    <label>🇰🇷 Upload Korean Subtitle (.vtt)</label>
+    <input type="file" id="upload-ko" accept=".vtt">
   </div>
 
   <script src="script.js"></script>
