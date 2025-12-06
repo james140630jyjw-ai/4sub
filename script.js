@@ -2,21 +2,20 @@ const video = document.getElementById("video");
 const trackEnEl = document.getElementById("track-en");
 const trackKoEl = document.getElementById("track-ko");
 
+const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
 console.log("subtitle player script loaded");
 
-let holdingSubtitle = false; // 지금 자막 홀드 중인지 여부
-
 // ------------------------------
 // 자막 트랙 찾기
 // ------------------------------
 function getTracks() {
   const tracks = video.textTracks;
-  let en = null,
-    ko = null;
+  let en = null;
+  let ko = null;
 
   for (let i = 0; i < tracks.length; i++) {
     const t = tracks[i];
@@ -34,7 +33,7 @@ function getTracks() {
 }
 
 // ------------------------------
-// 자막 ON/OFF
+// 자막 스위치
 // ------------------------------
 function showEnglish() {
   const { en, ko } = getTracks();
@@ -56,7 +55,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// (옵션) 15초 티저 제한
+// (옵션) 15초 티저 제한 – 필요 없으면 이 블록 삭제해도 됨
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -66,58 +65,40 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 영상 클릭 중 "자막 구역"만 가로채기
-//  - 아래쪽 40% 중에서, 맨 아래 40px(컨트롤바) 제외 영역을 자막 구역으로 사용
+// 자막 레이어: 홀드 동안 영어, 떼면 한국어
+//  - 비디오에는 이벤트 안 가게 막아서 재생/일시정지에 영향을 안 줌
 // ------------------------------
-function isInSubtitleZone(e) {
-  const rect = video.getBoundingClientRect();
-  const y = e.clientY;
-
-  // 비디오 바깥이면 false
-  if (y < rect.top || y > rect.bottom) return false;
-
-  const height = rect.height;
-  const fromBottom = rect.bottom - y;
-
-  const controlsHeight = 40;          // 대략 컨트롤바 높이
-  const subtitleBandHeight = height * 0.4; // 아래쪽 40% 정도를 자막 영역 후보로
-
-  // 컨트롤바 바로 위 ~ 아래쪽 40% 범위
-  return fromBottom > controlsHeight && fromBottom < controlsHeight + subtitleBandHeight;
-}
-
-// pointerdown: 자막 구역이면 영어로 전환 + 기본 동작 막기
-video.addEventListener("pointerdown", (e) => {
+function subtitleDown(e) {
+  // 마우스 오른쪽 버튼 등은 무시
   if (e.pointerType === "mouse" && e.button !== 0) return;
-
-  if (isInSubtitleZone(e)) {
-    holdingSubtitle = true;
-    e.preventDefault();
-    e.stopPropagation();
-    showEnglish();
-
-    // 혹시 멈춰있었으면 재생 유지
-    if (video.paused && !video.ended) {
-      video.play().catch(() => {});
-    }
-  } else {
-    holdingSubtitle = false;
-    // 자막 구역이 아니면 브라우저 기본: 재생/일시정지, 드래그, 전체화면 등
-  }
-});
-
-function handlePointerUp(e) {
-  if (!holdingSubtitle) return;
 
   e.preventDefault();
   e.stopPropagation();
-  holdingSubtitle = false;
+  showEnglish();
+}
+
+function subtitleUp(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  e.preventDefault();
+  e.stopPropagation();
   showKorean();
 }
 
-video.addEventListener("pointerup", handlePointerUp);
-video.addEventListener("pointercancel", handlePointerUp);
-video.addEventListener("pointerleave", handlePointerUp);
+if ("onpointerdown" in window) {
+  subtitleTouchLayer.addEventListener("pointerdown", subtitleDown);
+  subtitleTouchLayer.addEventListener("pointerup", subtitleUp);
+  subtitleTouchLayer.addEventListener("pointercancel", subtitleUp);
+} else {
+  // 구형 브라우저 fallback
+  subtitleTouchLayer.addEventListener("mousedown", subtitleDown);
+  subtitleTouchLayer.addEventListener("mouseup", subtitleUp);
+  subtitleTouchLayer.addEventListener("mouseleave", subtitleUp);
+
+  subtitleTouchLayer.addEventListener("touchstart", subtitleDown, { passive: false });
+  subtitleTouchLayer.addEventListener("touchend", subtitleUp, { passive: false });
+  subtitleTouchLayer.addEventListener("touchcancel", subtitleUp, { passive: false });
+}
 
 // ------------------------------
 // 업로드 기능
