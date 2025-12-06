@@ -41,18 +41,32 @@
       z-index: 1;
     }
 
-    /* 💬 자막 터치 레이어 – 영상 아래쪽 부분만 덮기 */
-    #subtitle-touch-layer {
+    /* 💬 우리가 직접 그리는 자막 박스 (클릭 가능) */
+    #subtitle-overlay {
       position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 12%;   /* 컨트롤바 위에 살짝 띄워둠 */
-      height: 30%;   /* 자막이 나오는 대략적인 영역 */
+      left: 5%;
+      right: 5%;
+      bottom: 12%;      /* 컨트롤바 위에 위치 */
+      min-height: 2.4em;
       z-index: 2;
+      text-align: center;
+      font-size: 1rem;
+      line-height: 1.4;
+      color: #fff;
+      text-shadow: 0 0 4px #000, 0 0 8px #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       pointer-events: auto;
-      /* 디버깅용: 필요하면 잠깐 켜서 위치 확인
-      background: rgba(0, 255, 0, 0.15);
+      /* 디버깅용 배경
+      background: rgba(0,0,0,0.3);
       */
+    }
+
+    #subtitle-overlay span {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
     }
 
     #uploader {
@@ -90,7 +104,7 @@
     <video id="video" controls>
       <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-      <!-- 기본: 한국어 자막 -->
+      <!-- 데이터용 트랙 (render 안 함) -->
       <track
         id="track-en"
         label="English"
@@ -104,12 +118,11 @@
         kind="subtitles"
         srclang="ko"
         src="sample/sample_ko.vtt"
-        default
       />
     </video>
 
-    <!-- 자막 홀드/해제 영역 -->
-    <div id="subtitle-touch-layer"></div>
+    <!-- 커스텀 자막 + 터치 영역 -->
+    <div id="subtitle-overlay"></div>
   </div>
 
   <div id="uploader">
