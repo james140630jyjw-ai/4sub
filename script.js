@@ -1,6 +1,6 @@
 const video = document.getElementById("video");
-const trackEn = document.getElementById("track-en");
-const trackKo = document.getElementById("track-ko");
+const trackEnEl = document.getElementById("track-en");
+const trackKoEl = document.getElementById("track-ko");
 
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
@@ -8,17 +8,21 @@ const uploadKoInput = document.getElementById("upload-ko");
 
 console.log("subtitle player script loaded");
 
+// 실제 자막(TextTrack) 객체
+const trackEn = trackEnEl.track;
+const trackKo = trackKoEl.track;
+
 // ----- 자막 표시 함수 -----
 function showEnglish() {
   console.log("→ EN");
-  trackEn.mode = "showing";
-  trackKo.mode = "hidden";
+  trackEn.mode = "showing";   // 영어 자막 보이기
+  trackKo.mode = "disabled";  // 한국어 자막 숨기기
 }
 
 function showKorean() {
   console.log("→ KO");
-  trackEn.mode = "hidden";
-  trackKo.mode = "showing";
+  trackEn.mode = "disabled";  // 영어 자막 숨기기
+  trackKo.mode = "showing";   // 한국어 자막 보이기
 }
 
 // 처음에는 한국어 자막
@@ -32,9 +36,9 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ----- 자막 전환: pointer 이벤트 한 번에 처리 -----
+// ----- 자막 전환: pointer 이벤트 -----
 function handlePointerDown(e) {
-  // 마우스 오른쪽/가운데 버튼은 무시
+  // 마우스 오른쪽/가운데는 무시
   if (e.pointerType === "mouse" && e.button !== 0) return;
   showEnglish();
 }
@@ -47,7 +51,7 @@ function handlePointerUp(e) {
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("pointerup", handlePointerUp);
 
-// ----- 비디오 클릭으로 재생/일시정지 토글만 막기 -----
+// ----- 비디오 클릭으로 play/pause 토글되는 것만 막기 -----
 video.addEventListener("click", (e) => {
   e.preventDefault();
 });
@@ -70,7 +74,7 @@ uploadEnInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  trackEn.src = URL.createObjectURL(file);
+  trackEnEl.src = URL.createObjectURL(file);
   video.load();
 });
 
@@ -79,6 +83,6 @@ uploadKoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  trackKo.src = URL.createObjectURL(file);
+  trackKoEl.src = URL.createObjectURL(file);
   video.load();
 });
