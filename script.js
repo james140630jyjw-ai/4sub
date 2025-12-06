@@ -1,126 +1,127 @@
 const video = document.getElementById("video");
-const trackEnEl = document.getElementById("track-en");
-const trackKoEl = document.getElementById("track-ko");
-
-const subtitleBar = document.getElementById("subtitle-bar");
-const subtitleSpan = subtitleBar.querySelector("span");
-
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
-let currentLang = "ko"; // 기본 한국어
-let enTrack = null;
-let koTrack = null;
+console.log("subtitle player script loaded");
 
-// ------------------------------
-// 트랙 초기화
-// ------------------------------
-function initTracks() {
+// 현재 동영상에서 EN/KO 트랙 찾기
+function getTracks() {
   const tracks = video.textTracks;
-  enTrack = null;
-  koTrack = null;
+  let en = null;
+  let ko = null;
 
   for (let i = 0; i < tracks.length; i++) {
     const t = tracks[i];
     const lang = (t.language || "").toLowerCase();
     const label = (t.label || "").toLowerCase();
 
-    if (!enTrack && (lang.startsWith("en") || label.includes("english"))) enTrack = t;
-    if (!koTrack && (lang.startsWith("ko") || label.includes("korean"))) koTrack = t;
+    if (!en && (lang.startsWith("en") || label.includes("english"))) {
+      en = t;
+    }
+    if (!ko && (lang.startsWith("ko") || label.includes("korean"))) {
+      ko = t;
+    }
   }
+  return { en, ko };
+}
 
-  if (enTrack) enTrack.mode = "hidden";
-  if (koTrack) koTrack.mode = "hidden";
-
-  if (enTrack) {
-    enTrack.addEventListener("cuechange", updateSubtitle);
+// ---- 영상이 멈춰 있으면 다시 재생시키는 함수 (맥북용 응급처치) ----
+function keepPlaying() {
+  if (video.paused && !video.ended) {
+    const p = video.play();
+    // 일부 브라우저에서 promise를 던질 수 있어서 안전하게 처리
+    if (p && typeof p.catch === "function") {
+      p.catch(() => {});
+    }
   }
-  if (koTrack) {
-    koTrack.addEventListener("cuechange", updateSubtitle);
-  }
-
-  updateSubtitle();
 }
 
-// ------------------------------
-// 자막 업데이트
-// ------------------------------
-function updateSubtitle() {
-  const track = currentLang === "en" ? enTrack : koTrack;
-  if (!track) return subtitleSpan.innerHTML = "";
-
-  const cues = track.activeCues;
-  if (!cues || cues.length === 0) return subtitleSpan.innerHTML = "";
-
-  const text = cues[0].text.replace(/\n/g, "<br>");
-  subtitleSpan.innerHTML = text;
+// ----- 자막 표시 함수 -----
+function showEnglish() {
+  const { en, ko } = getTracks();
+  console.log("→ EN", en, ko);
+  if (en) en.mode = "showing";
+  if (ko) ko.mode = "hidden";
 }
 
-// ------------------------------
-// 자막 바 홀드 기능
-// ------------------------------
-function subtitleDown(e) {
-  if (e.button !== 0 && e.pointerType === "mouse") return; // 좌클릭만
-  currentLang = "en";
-  updateSubtitle();
+function showKorean() {
+  const { en, ko } = getTracks();
+  console.log("→ KO", en, ko);
+  if (en) en.mode = "hidden";
+  if (ko) ko.mode = "showing";
 }
 
-function subtitleUp(e) {
-  currentLang = "ko";
-  updateSubtitle();
-}
+// 메타데이터 로드 후 기본은 한국어
+video.addEventListener("loadedmetadata", () => {
+  showKorean();
+});
 
-subtitleBar.addEventListener("pointerdown", subtitleDown);
-subtitleBar.addEventListener("pointerup", subtitleUp);
-subtitleBar.addEventListener("pointercancel", subtitleUp);
-
-// ------------------------------
-// 전체화면 모드 처리
-// ------------------------------
-document.addEventListener("fullscreenchange", () => {
-  const isFullscreen = document.fullscreenElement === video;
-
-  if (isFullscreen) {
-    // 전체화면 에서는 기본 자막 사용 (인터랙티브 기능 OFF)
-    if (enTrack) enTrack.mode = "hidden";
-    if (koTrack) koTrack.mode = "showing"; // 기본 한국어 자막
-    subtitleBar.style.display = "none";
-  } else {
-    // 일반 화면
-    if (enTrack) enTrack.mode = "hidden";
-    if (koTrack) koTrack.mode = "hidden";
-    subtitleBar.style.display = "flex";
-    updateSubtitle();
+// ----- 15초 티저 제한 -----
+video.addEventListener("timeupdate", () => {
+  if (video.currentTime > 15) {
+    video.pause();
+    video.currentTime = 0;
   }
 });
 
-// ------------------------------
-// 업로드 기능
-// ------------------------------
-uploadVideoInput.addEventListener("change", e => {
+// ----- 자막 전환 + 강제 재생: pointer 이벤트 -----
+function handlePointerDown(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return; // 왼쪽 버튼만
+  showEnglish();
+  keepPlaying(); // 맥북에서 down 시점에 멈춰 있으면 재생
+}
+
+function handlePointerUp(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  showKorean();
+  keepPlaying(); // up 시점에도 한 번 더 재생
+}
+
+document.addEventListener("pointerdown", handlePointerDown);
+document.addEventListener("pointerup", handlePointerUp);
+
+// ----- 비디오 기본 클릭 동작(play/pause 토글)만 막기 -----
+function blockVideoPointer(e) {
+  e.preventDefault(); // 기본 토글 끄기
+}
+video.addEventListener("pointerdown", blockVideoPointer);
+video.addEventListener("pointerup", blockVideoPointer);
+video.addEventListener("mousedown", blockVideoPointer);
+video.addEventListener("mouseup", blockVideoPointer);
+video.addEventListener("click", blockVideoPointer);
+
+// ----- 업로드 기능 -----
+
+// 영상 업로드
+uploadVideoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  video.src = URL.createObjectURL(file);
+
+  const url = URL.createObjectURL(file);
+  video.src = url;
   video.load();
-  video.play().catch(() => {});
+  video.play();
 });
 
-uploadEnInput.addEventListener("change", e => {
+// 영어 자막 업로드
+uploadEnInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  trackEnEl.src = URL.createObjectURL(file);
+
+  const url = URL.createObjectURL(file);
+  const el = document.getElementById("track-en");
+  el.src = url;
   video.load();
-  video.onloadedmetadata = initTracks;
 });
 
-uploadKoInput.addEventListener("change", e => {
+// 한국어 자막 업로드
+uploadKoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  trackKoEl.src = URL.createObjectURL(file);
-  video.load();
-  video.onloadedmetadata = initTracks;
-});
 
-// 첫 초기화
-video.addEventListener("loadedmetadata", initTracks);
+  const url = URL.createObjectURL(file);
+  const el = document.getElementById("track-ko");
+  el.src = url;
+  video.load();
+});
