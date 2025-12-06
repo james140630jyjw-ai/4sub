@@ -2,12 +2,13 @@ const video = document.getElementById("video");
 const trackEnEl = document.getElementById("track-en");
 const trackKoEl = document.getElementById("track-ko");
 
-const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
 console.log("subtitle player script loaded");
+
+let holdingSubtitle = false; // 지금 자막 홀드 중인지 여부
 
 // ------------------------------
 // 자막 트랙 찾기
@@ -55,7 +56,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// 15초 티저 제한 (원하면 유지, 필요 없으면 이 블록 삭제해도 됨)
+// (옵션) 15초 티저 제한
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -65,45 +66,63 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 자막 터치 레이어 (홀드 동안 영어, 떼면 한국어)
-//  - 여기서만 이벤트를 비디오까지 안 보내도록 막는다
+// 영상 클릭 중 "자막 구역"만 가로채기
+//  - 아래쪽 40% 중에서, 맨 아래 40px(컨트롤바) 제외 영역을 자막 구역으로 사용
 // ------------------------------
-function subtitleDown(e) {
-  // 오른쪽 클릭 무시
-  if (e.pointerType === "mouse" && e.button !== 0) return;
+function isInSubtitleZone(e) {
+  const rect = video.getBoundingClientRect();
+  const y = e.clientY;
 
-  e.preventDefault();
-  e.stopPropagation();
-  showEnglish();
+  // 비디오 바깥이면 false
+  if (y < rect.top || y > rect.bottom) return false;
+
+  const height = rect.height;
+  const fromBottom = rect.bottom - y;
+
+  const controlsHeight = 40;          // 대략 컨트롤바 높이
+  const subtitleBandHeight = height * 0.4; // 아래쪽 40% 정도를 자막 영역 후보로
+
+  // 컨트롤바 바로 위 ~ 아래쪽 40% 범위
+  return fromBottom > controlsHeight && fromBottom < controlsHeight + subtitleBandHeight;
 }
 
-function subtitleUp(e) {
+// pointerdown: 자막 구역이면 영어로 전환 + 기본 동작 막기
+video.addEventListener("pointerdown", (e) => {
   if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  if (isInSubtitleZone(e)) {
+    holdingSubtitle = true;
+    e.preventDefault();
+    e.stopPropagation();
+    showEnglish();
+
+    // 혹시 멈춰있었으면 재생 유지
+    if (video.paused && !video.ended) {
+      video.play().catch(() => {});
+    }
+  } else {
+    holdingSubtitle = false;
+    // 자막 구역이 아니면 브라우저 기본: 재생/일시정지, 드래그, 전체화면 등
+  }
+});
+
+function handlePointerUp(e) {
+  if (!holdingSubtitle) return;
 
   e.preventDefault();
   e.stopPropagation();
+  holdingSubtitle = false;
   showKorean();
 }
 
-if ("onpointerdown" in window) {
-  subtitleTouchLayer.addEventListener("pointerdown", subtitleDown);
-  subtitleTouchLayer.addEventListener("pointerup", subtitleUp);
-  subtitleTouchLayer.addEventListener("pointercancel", subtitleUp);
-} else {
-  // 구형 브라우저용 fallback
-  subtitleTouchLayer.addEventListener("mousedown", subtitleDown);
-  subtitleTouchLayer.addEventListener("mouseup", subtitleUp);
-  subtitleTouchLayer.addEventListener("mouseleave", subtitleUp);
-
-  subtitleTouchLayer.addEventListener("touchstart", subtitleDown, { passive: false });
-  subtitleTouchLayer.addEventListener("touchend", subtitleUp, { passive: false });
-  subtitleTouchLayer.addEventListener("touchcancel", subtitleUp, { passive: false });
-}
+video.addEventListener("pointerup", handlePointerUp);
+video.addEventListener("pointercancel", handlePointerUp);
+video.addEventListener("pointerleave", handlePointerUp);
 
 // ------------------------------
 // 업로드 기능
 // ------------------------------
-uploadVideoInput.addEventListener("change", (e) => {
+uploadVideoInput?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -113,7 +132,7 @@ uploadVideoInput.addEventListener("change", (e) => {
   video.play().catch(() => {});
 });
 
-uploadEnInput.addEventListener("change", (e) => {
+uploadEnInput?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -122,7 +141,7 @@ uploadEnInput.addEventListener("change", (e) => {
   video.load();
 });
 
-uploadKoInput.addEventListener("change", (e) => {
+uploadKoInput?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
