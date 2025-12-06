@@ -6,7 +6,7 @@ const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
-// ----- 자막 표시 함수 -----
+// ----- 기본값: 한국어 -----
 function showEnglish() {
   trackEn.mode = "showing";
   trackKo.mode = "hidden";
@@ -17,7 +17,7 @@ function showKorean() {
   trackKo.mode = "showing";
 }
 
-// 처음에는 한국어 자막
+// 페이지 로드 시 한국어 자막 보이게
 showKorean();
 
 // ----- 15초 티저 제한 -----
@@ -28,15 +28,15 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ----- 자막 전환: 마우스 / 터치 -----
+// ----- 자막 전환 (마우스 / 터치) -----
 
-// 마우스를 누르고 있을 때 → 영어
+// 마우스를 누르는 순간 → 영어
 window.addEventListener("mousedown", (e) => {
   if (e.button !== 0) return; // 왼쪽 버튼만
   showEnglish();
 });
 
-// 마우스를 뗄 때 → 한국어
+// 마우스를 떼는 순간 → 한국어
 window.addEventListener("mouseup", (e) => {
   if (e.button !== 0) return;
   showKorean();
@@ -52,12 +52,23 @@ window.addEventListener("touchend", () => {
   showKorean();
 });
 
-// 비디오를 클릭해도 재생/일시정지 토글이 안 되게 막기
+// ----- 비디오 클릭으로 재생/일시정지되는 문제 제거 -----
 video.addEventListener("click", (e) => {
   e.preventDefault();
+  e.stopPropagation();
 });
 
-// ----- 업로드 기능 유지 -----
+video.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+video.addEventListener("mouseup", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+// ----- 업로드 기능 -----
 
 // 영상 업로드
 uploadVideoInput.addEventListener("change", (e) => {
