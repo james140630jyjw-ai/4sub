@@ -1,132 +1,101 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interactive Subtitle Switch Player</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interactive Subtitle Switch Player</title>
 
-    h1 {
-      margin-top: 20px;
-      margin-bottom: 10px;
-    }
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-    .video-wrapper {
-      position: relative;
-      width: 90%;
-      max-width: 800px;
-      margin-top: 20px;
-    }
+  h1 {
+    margin-top: 25px;
+  }
 
-    video {
-      width: 100%;
-      display: block;
-      background: black;
-      border-radius: 10px;
-      position: relative;
-      z-index: 1;
-    }
+  /* 🎥 비디오 16:9 비율 고정 */
+  .video-wrapper {
+    position: relative;
+    width: 90%;
+    max-width: 800px;
+    aspect-ratio: 16/9;  /* 🔥 Safari도 지원되는 최신 속성 */
+    background: black;
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-    /* ⛔ 영상 클릭 차단 레이어 (재생 시작 후 활성화, 컨트롤바는 비워둠) */
-    #video-click-blocker {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 15%;   /* 맨 아래 15%는 컨트롤바 영역으로 남겨둠 */
-      z-index: 2;
-      pointer-events: none; /* 처음엔 비활성화 → play 후 JS에서 활성화 */
-      /* 디버깅용
-      background: rgba(255, 0, 0, 0.1);
-      */
-    }
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;  /* 비율 채우기 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
 
-    /* 💬 자막 터치 레이어: 컨트롤바 위 30%만 덮기 (자막 영역) */
-    #subtitle-touch-layer {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 15%;   /* 컨트롤바 위에서 시작 */
-      height: 30%;   /* 그 위 30%를 자막 터치 영역으로 사용 */
-      z-index: 3;
-      pointer-events: auto;
-      /* 디버깅용
-      background: rgba(0, 255, 0, 0.1);
-      */
-    }
+  /* ⛔ 영상 클릭 차단 (controls 바깥 영역 클릭 방지) */
+  #video-click-blocker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 85%; /* 아래 15%만 비디오가 클릭 가능 */
+    z-index: 2;
+    pointer-events: auto;
+    /* 디버깅용: background: rgba(255,0,0,0.1); */
+  }
 
-    #uploader {
-      margin-top: 25px;
-      padding: 15px;
-      background: #222;
-      border-radius: 10px;
-      text-align: center;
-    }
+  /* 💬 자막 터치 레이어 */
+  #subtitle-touch-layer {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    bottom: 15%;   /* 컨트롤바 위 */
+    height: 30%;   /* 자막 위치 */
+    z-index: 3;
+    pointer-events: auto;
+    /* 디버깅: background: rgba(0,255,0,0.1); */
+  }
 
-    #uploader label {
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    #uploader input {
-      margin-bottom: 10px;
-    }
-  </style>
+  /* 🎛 재생바를 비디오 높이에 포함시키지 않고 오버레이로 띄움 */
+  video::-webkit-media-controls-panel {
+    position: absolute !important;
+    bottom: 0 !important;
+    height: 15% !important; /* 우리가 비워둔 영역 안에서만 표시됨 */
+  }
+</style>
 </head>
 
 <body>
-  <h1>Interactive Subtitle Switch Player</h1>
+<h1>Interactive Subtitle Switch Player</h1>
 
-  <div class="video-wrapper">
-    <video id="video" controls>
-      <source src="sample/sample_teaser.mp4" type="video/mp4" />
+<div class="video-wrapper">
 
-      <!-- 기본: 한국어 자막 -->
-      <track
-        id="track-en"
-        label="English"
-        kind="subtitles"
-        srclang="en"
-        src="sample/sample_en.vtt"
-      />
+  <video id="video" controls>
+    <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-      <track
-        id="track-ko"
-        label="Korean"
-        kind="subtitles"
-        srclang="ko"
-        src="sample/sample_ko.vtt"
-        default
-      />
-    </video>
+    <track id="track-en" label="English" kind="subtitles"
+           srclang="en" src="sample/sample_en.vtt" />
 
-    <!-- ⛔ 영상 클릭 차단 레이어 (재생 시작 후 활성화) -->
-    <div id="video-click-blocker"></div>
+    <track id="track-ko" label="Korean" kind="subtitles"
+           srclang="ko" src="sample/sample_ko.vtt" default />
+  </video>
 
-    <!-- 💬 자막 홀드/해제 영역 -->
-    <div id="subtitle-touch-layer"></div>
-  </div>
+  <div id="video-click-blocker"></div>
 
-  <div id="uploader">
-    <label>🎬 Upload Your Own Video</label>
-    <input type="file" id="upload-video" accept="video/*" /><br />
+  <div id="subtitle-touch-layer"></div>
 
-    <label>🇺🇸 Upload English Subtitle (.vtt)</label>
-    <input type="file" id="upload-en" accept=".vtt" /><br />
+</div>
 
-    <label>🇰🇷 Upload Korean Subtitle (.vtt)</label>
-    <input type="file" id="upload-ko" accept=".vtt" />
-  </div>
-
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
