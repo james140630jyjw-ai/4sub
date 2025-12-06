@@ -6,13 +6,17 @@ const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
+console.log("subtitle player script loaded");
+
 // ----- 자막 표시 함수 -----
 function showEnglish() {
+  console.log("→ EN");
   trackEn.mode = "showing";
   trackKo.mode = "hidden";
 }
 
 function showKorean() {
+  console.log("→ KO");
   trackEn.mode = "hidden";
   trackKo.mode = "showing";
 }
@@ -28,33 +32,24 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ----- 자막 전환: 마우스 / 터치 -----
-
-// 마우스를 누르는 순간 → 영어
-window.addEventListener("mousedown", (e) => {
-  if (e.button !== 0) return; // 왼쪽 버튼만
+// ----- 자막 전환: pointer 이벤트 한 번에 처리 -----
+function handlePointerDown(e) {
+  // 마우스 오른쪽/가운데 버튼은 무시
+  if (e.pointerType === "mouse" && e.button !== 0) return;
   showEnglish();
-});
+}
 
-// 마우스를 떼는 순간 → 한국어
-window.addEventListener("mouseup", (e) => {
-  if (e.button !== 0) return;
+function handlePointerUp(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
   showKorean();
-});
+}
 
-// 터치 시작 → 영어
-window.addEventListener("touchstart", () => {
-  showEnglish();
-});
+document.addEventListener("pointerdown", handlePointerDown);
+document.addEventListener("pointerup", handlePointerUp);
 
-// 터치 끝 → 한국어
-window.addEventListener("touchend", () => {
-  showKorean();
-});
-
-// ----- 비디오 클릭으로 재생/일시정지 토글되는 것만 막기 -----
+// ----- 비디오 클릭으로 재생/일시정지 토글만 막기 -----
 video.addEventListener("click", (e) => {
-  e.preventDefault(); // play/pause 토글만 막음
+  e.preventDefault();
 });
 
 // ----- 업로드 기능 -----
