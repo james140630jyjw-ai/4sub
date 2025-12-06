@@ -1,105 +1,115 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Subtitle Switch Player</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Subtitle Switch Player</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        h1 {
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
+    h1 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
 
-        .video-wrapper {
-            position: relative;
-            width: 90%;
-            max-width: 800px;
-            margin-top: 20px;
-        }
+    .video-wrapper {
+      position: relative;
+      width: 90%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
 
-        video {
-            width: 100%;
-            background: black;
-            border-radius: 10px;
-        }
+    video {
+      width: 100%;
+      display: block;
+      background: black;
+      border-radius: 10px;
+      position: relative;
+      z-index: 1;
+    }
 
-        /* 자막 터치 레이어: 영상의 아래쪽 35%만 덮기 (자막 영역) */
-        #subtitle-touch-layer {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 35%; /* 자막 나오는 부분만 */
-            /* background: rgba(255, 0, 0, 0.1);  디버깅용 – 필요하면 잠깐 켜서 영역 확인 */
-            pointer-events: auto;
-        }
+    /* 🔥 자막 터치 레이어: 영상의 아래쪽 35%만 덮기 */
+    #subtitle-touch-layer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 35%;      /* 자막 나오는 영역 비율 */
+      z-index: 2;
+      pointer-events: auto;
+      /* 디버깅할 때만 잠깐 켜보기
+      background: rgba(0, 255, 0, 0.1);
+      */
+    }
 
-        #uploader {
-            margin-top: 25px;
-            padding: 15px;
-            background: #222;
-            border-radius: 10px;
-            text-align: center;
-        }
+    #uploader {
+      margin-top: 25px;
+      padding: 15px;
+      background: #222;
+      border-radius: 10px;
+      text-align: center;
+    }
 
-        #uploader label {
-            display: block;
-            margin-bottom: 8px;
-        }
+    #uploader label {
+      display: block;
+      margin-bottom: 8px;
+    }
 
-        #uploader input {
-            margin-bottom: 10px;
-        }
-    </style>
+    #uploader input {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 
 <body>
-    <h1>Interactive Subtitle Switch Player</h1>
+  <h1>Interactive Subtitle Switch Player</h1>
 
-    <div class="video-wrapper">
-        <video id="video" controls>
-            <source src="sample/sample_teaser.mp4" type="video/mp4" />
+  <div class="video-wrapper">
+    <video id="video" controls>
+      <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-            <!-- 기본: 한국어 자막 -->
-            <track id="track-en"
-                   label="English"
-                   kind="subtitles"
-                   srclang="en"
-                   src="sample/sample_en.vtt">
+      <!-- 기본: 한국어 자막 -->
+      <track
+        id="track-en"
+        label="English"
+        kind="subtitles"
+        srclang="en"
+        src="sample/sample_en.vtt"
+      />
 
-            <track id="track-ko"
-                   label="Korean"
-                   kind="subtitles"
-                   srclang="ko"
-                   src="sample/sample_ko.vtt"
-                   default>
-        </video>
+      <track
+        id="track-ko"
+        label="Korean"
+        kind="subtitles"
+        srclang="ko"
+        src="sample/sample_ko.vtt"
+        default
+      />
+    </video>
 
-        <!-- 자막 터치 전용 레이어 (영상 아래쪽 부분만) -->
-        <div id="subtitle-touch-layer"></div>
-    </div>
+    <!-- 🔥 자막 터치 전용 레이어 (영상 아래쪽 부분만) -->
+    <div id="subtitle-touch-layer"></div>
+  </div>
 
-    <div id="uploader">
-        <label>🎬 Upload Your Own Video</label>
-        <input type="file" id="upload-video" accept="video/*" /><br />
+  <div id="uploader">
+    <label>🎬 Upload Your Own Video</label>
+    <input type="file" id="upload-video" accept="video/*" /><br />
 
-        <label>🇺🇸 Upload English Subtitle (.vtt)</label>
-        <input type="file" id="upload-en" accept=".vtt" /><br />
+    <label>🇺🇸 Upload English Subtitle (.vtt)</label>
+    <input type="file" id="upload-en" accept=".vtt" /><br />
 
-        <label>🇰🇷 Upload Korean Subtitle (.vtt)</label>
-        <input type="file" id="upload-ko" accept=".vtt" />
-    </div>
+    <label>🇰🇷 Upload Korean Subtitle (.vtt)</label>
+    <input type="file" id="upload-ko" accept=".vtt" />
+  </div>
 
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
