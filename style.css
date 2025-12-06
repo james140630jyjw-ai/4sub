@@ -1,0 +1,64 @@
+body {
+  background: #111;
+  color: #eee;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+  margin: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+.guide {
+  opacity: 0.85;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+#player-container {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto 30px auto;
+}
+
+video {
+  width: 100%;
+  border-radius: 10px;
+  outline: none;
+  background: #000;
+}
+
+.upload-area {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+  margin-top: 40px;
+  padding: 20px;
+  background: #222;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.upload-area h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+input[type="file"] {
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.hint {
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: 0.8;
+}
