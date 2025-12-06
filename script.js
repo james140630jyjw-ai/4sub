@@ -49,20 +49,43 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ==== 자막 터치 오버레이에서만 EN/KO 스위치 ====
+// ==== 일반 화면에서만 자막 터치 오버레이 작동 ====
+
+let isFullscreen = false;
+
+document.addEventListener("fullscreenchange", () => {
+  isFullscreen = document.fullscreenElement === video;
+
+  const { en, ko } = getTracks();
+
+  if (isFullscreen) {
+    // 전체화면: 인터랙티브 기능 OFF, 기본 KO 자막만 사용
+    if (en) en.mode = "hidden";
+    if (ko) ko.mode = "showing";
+    subtitleTouch.style.display = "none"; // 터치 레이어 숨김
+  } else {
+    // 일반 화면: 우리가 제어
+    if (en) en.mode = "hidden";
+    if (ko) ko.mode = "showing";
+    subtitleTouch.style.display = "block";
+  }
+});
 
 // 공통 핸들러
 function onSubtitleDown(e) {
-  // 마우스: 왼쪽 버튼만
-  if (e.button !== undefined && e.button !== 0) return;
+  if (isFullscreen) return; // 전체화면에서는 그냥 무시
+
+  if (e.button !== undefined && e.button !== 0) return; // 마우스 오른쪽 등 무시
 
   e.preventDefault();
-  e.stopPropagation(); // 이벤트가 video까지 올라가지 않도록
+  e.stopPropagation(); // 이벤트가 video까지 가지 않게
 
   showEnglish();
 }
 
 function onSubtitleUp(e) {
+  if (isFullscreen) return;
+
   if (e.button !== undefined && e.button !== 0) return;
 
   e.preventDefault();
@@ -71,23 +94,18 @@ function onSubtitleUp(e) {
   showKorean();
 }
 
-// pointer 이벤트
-subtitleTouch.addEventListener("pointerdown", onSubtitleDown);
-subtitleTouch.addEventListener("pointerup", onSubtitleUp);
-subtitleTouch.addEventListener("pointercancel", onSubtitleUp);
-
-// mouse fallback
+// mouse 이벤트 (PC + 맥북 트랙패드용)
 subtitleTouch.addEventListener("mousedown", onSubtitleDown);
 subtitleTouch.addEventListener("mouseup", onSubtitleUp);
 subtitleTouch.addEventListener("mouseleave", onSubtitleUp);
 
-// touch fallback
+// touch 이벤트 (터치 디바이스용)
 subtitleTouch.addEventListener("touchstart", onSubtitleDown, { passive: false });
 subtitleTouch.addEventListener("touchend", onSubtitleUp, { passive: false });
 subtitleTouch.addEventListener("touchcancel", onSubtitleUp, { passive: false });
 
-// ❗ video / document 에는 어떤 클릭/포인터 이벤트도 걸지 않는다.
-//   → 재생 버튼, 타임라인, 전체화면 버튼 모두 브라우저 기본대로 동작.
+// ❗ video / document 에 이벤트는 걸지 않는다.
+//   → 재생 버튼, 타임라인, 전체화면 버튼은 완전 브라우저 기본 동작 유지.
 
 // ==== 업로드 기능 ====
 
