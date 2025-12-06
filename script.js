@@ -5,6 +5,7 @@ const trackKoEl = document.getElementById("track-ko");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
+const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
 
 console.log("subtitle player script loaded");
 
@@ -33,18 +34,6 @@ function getTracks() {
 }
 
 // ------------------------------
-// 맥북용: 멈추면 다시 재생
-// ------------------------------
-function keepPlaying() {
-  if (video.paused && !video.ended) {
-    const p = video.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {});
-    }
-  }
-}
-
-// ------------------------------
 // 자막 표시
 // ------------------------------
 function showEnglish() {
@@ -62,7 +51,7 @@ function showKorean() {
 }
 
 // ------------------------------
-// 영상 메타데이터 로드 후 기본 한국어
+// 기본 자막: 한국어
 // ------------------------------
 video.addEventListener("loadedmetadata", () => {
   showKorean();
@@ -79,55 +68,24 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 자막 전환: pointer 이벤트 (PC + 맥)
-//  - 단, video 위에서 시작한 홀드는 완전히 무시
+// 자막 전환: 자막 터치 레이어에서만 처리
+//  - 영상 컨트롤(재생 버튼)은 건드리지 않음
+//  - 홀드 했다 떼어도 영상은 멈추지 않음
 // ------------------------------
-let holdFromVideo = false;
-
-function isFromVideoTarget(e) {
-  if (e.target === video) return true;
-  if (e.target.closest && e.target.closest("video")) return true;
-  return false;
-}
-
-function handlePointerDown(e) {
-  // 마우스라면 왼쪽 버튼만
+subtitleTouchLayer.addEventListener("pointerdown", (e) => {
+  // 오른쪽 클릭 등은 무시
   if (e.pointerType === "mouse" && e.button !== 0) return;
-
-  // 비디오 위에서 시작된 홀드는 무시 (재생/일시정지랑 안 싸우게)
-  holdFromVideo = isFromVideoTarget(e);
-  if (holdFromVideo) {
-    console.log("pointerdown from video → ignore for subtitle switch");
-    return;
-  }
-
   showEnglish();
-  keepPlaying();
-}
+});
 
-function handlePointerUp(e) {
+subtitleTouchLayer.addEventListener("pointerup", (e) => {
   if (e.pointerType === "mouse" && e.button !== 0) return;
-
-  // 비디오에서 시작한 홀드였다면 그대로 무시
-  if (holdFromVideo) {
-    console.log("pointerup from video → ignore for subtitle switch");
-    holdFromVideo = false;
-    return;
-  }
-
   showKorean();
-  keepPlaying();
-}
-
-// 화면 전체에서 눌렀다/뗄 때 처리
-document.addEventListener("pointerdown", handlePointerDown);
-document.addEventListener("pointerup", handlePointerUp);
+});
 
 // ------------------------------
 // 업로드 기능
 // ------------------------------
-
-// 영상 업로드
 uploadVideoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -138,7 +96,6 @@ uploadVideoInput.addEventListener("change", (e) => {
   video.play();
 });
 
-// 영어 자막 업로드
 uploadEnInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -148,7 +105,6 @@ uploadEnInput.addEventListener("change", (e) => {
   video.load();
 });
 
-// 한국어 자막 업로드
 uploadKoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
