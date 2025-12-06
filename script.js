@@ -2,12 +2,14 @@ const video = document.getElementById("video");
 const trackEnEl = document.getElementById("track-en");
 const trackKoEl = document.getElementById("track-ko");
 
-const subtitleBox = document.getElementById("subtitle-overlay");
+const subtitleBar = document.getElementById("subtitle-bar");
+const subtitleSpan = subtitleBar.querySelector("span");
+
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
 
-console.log("subtitle player (custom overlay) loaded");
+console.log("interactive subtitle bar loaded");
 
 let currentLang = "ko"; // 기본 한국어
 let enTrack = null;
@@ -34,11 +36,10 @@ function initTracks() {
     }
   }
 
-  // 브라우저 기본 자막 렌더링은 끄기
+  // 브라우저 기본 자막 렌더링은 끄고, JS에서만 사용
   if (enTrack) enTrack.mode = "hidden";
   if (koTrack) koTrack.mode = "hidden";
 
-  // cuechange 이벤트 한 번만 연결 (중복 연결돼도 문제는 없음)
   if (enTrack) {
     enTrack.removeEventListener("cuechange", updateSubtitle);
     enTrack.addEventListener("cuechange", updateSubtitle);
@@ -57,30 +58,29 @@ function initTracks() {
 function updateSubtitle() {
   let track = currentLang === "en" ? enTrack : koTrack;
   if (!track) {
-    subtitleBox.innerHTML = "";
+    subtitleSpan.innerHTML = "";
     return;
   }
 
   const cues = track.activeCues;
   if (!cues || cues.length === 0) {
-    subtitleBox.innerHTML = "";
+    subtitleSpan.innerHTML = "";
     return;
   }
 
-  // 여러 줄 자막 지원 (줄바꿈 → <br>)
   const text = cues[0].text.replace(/\r\n|\r|\n/g, "<br>");
-  subtitleBox.innerHTML = `<span>${text}</span>`;
+  subtitleSpan.innerHTML = text;
 }
 
 // ------------------------------
-// 기본: 메타데이터 로딩 후 트랙 초기화
+// 메타데이터 로딩 후 트랙 초기화
 // ------------------------------
 video.addEventListener("loadedmetadata", () => {
   initTracks();
 });
 
 // ------------------------------
-// (옵션) 15초 티저 제한 – 필요 없으면 삭제
+// (옵션) 15초 티저 제한 – 필요 없으면 이 블록 삭제
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -90,7 +90,7 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 자막 박스 홀드: 영어 / 손 떼면 한국어
+// 자막 바 홀드: 영어 / 손 떼면 한국어
 // ------------------------------
 function subtitleDown(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -112,38 +112,18 @@ function subtitleUp(e) {
   updateSubtitle();
 }
 
-if ("onpointerdown" in window) {
-  subtitleBox.addEventListener("pointerdown", subtitleDown);
-  subtitleBox.addEventListener("pointerup", subtitleUp);
-  subtitleBox.addEventListener("pointercancel", subtitleUp);
-} else {
-  subtitleBox.addEventListener("mousedown", subtitleDown);
-  subtitleBox.addEventListener("mouseup", subtitleUp);
-  subtitleBox.addEventListener("mouseleave", subtitleUp);
+// pointer 이벤트 + fallback 모두 걸어둔다 (맥/PC 호환)
+subtitleBar.addEventListener("pointerdown", subtitleDown);
+subtitleBar.addEventListener("pointerup", subtitleUp);
+subtitleBar.addEventListener("pointercancel", subtitleUp);
 
-  subtitleBox.addEventListener("touchstart", subtitleDown, { passive: false });
-  subtitleBox.addEventListener("touchend", subtitleUp, { passive: false });
-  subtitleBox.addEventListener("touchcancel", subtitleUp, { passive: false });
-}
+subtitleBar.addEventListener("mousedown", subtitleDown);
+subtitleBar.addEventListener("mouseup", subtitleUp);
+subtitleBar.addEventListener("mouseleave", subtitleUp);
 
-// ------------------------------
-// 전체화면: 인터랙션 대신 한국어 기본 자막만
-// ------------------------------
-document.addEventListener("fullscreenchange", () => {
-  const isFs = document.fullscreenElement === video;
-  if (isFs) {
-    // 전체화면: 브라우저 기본 자막 켜기 (한국어)
-    if (enTrack) enTrack.mode = "hidden";
-    if (koTrack) koTrack.mode = "showing";
-    subtitleBox.style.display = "none";
-  } else {
-    // 일반 모드: 커스텀 자막만 사용
-    if (enTrack) enTrack.mode = "hidden";
-    if (koTrack) koTrack.mode = "hidden";
-    subtitleBox.style.display = "flex";
-    updateSubtitle();
-  }
-});
+subtitleBar.addEventListener("touchstart", subtitleDown, { passive: false });
+subtitleBar.addEventListener("touchend", subtitleUp, { passive: false });
+subtitleBar.addEventListener("touchcancel", subtitleUp, { passive: false });
 
 // ------------------------------
 // 업로드 기능
@@ -158,6 +138,12 @@ uploadVideoInput?.addEventListener("change", (e) => {
   video.play().catch(() => {});
 });
 
+function reloadTracksOnNextMetadata() {
+  video.addEventListener("loadedmetadata", () => {
+    initTracks();
+  }, { once: true });
+}
+
 uploadEnInput?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -165,8 +151,7 @@ uploadEnInput?.addEventListener("change", (e) => {
   const url = URL.createObjectURL(file);
   trackEnEl.src = url;
   video.load();
-  // 새로운 자막 로딩 후 다시 트랙 초기화
-  video.addEventListener("loadedmetadata", initTracks, { once: true });
+  reloadTracksOnNextMetadata();
 });
 
 uploadKoInput?.addEventListener("change", (e) => {
@@ -176,5 +161,5 @@ uploadKoInput?.addEventListener("change", (e) => {
   const url = URL.createObjectURL(file);
   trackKoEl.src = url;
   video.load();
-  video.addEventListener("loadedmetadata", initTracks, { once: true });
+  reloadTracksOnNextMetadata();
 });
