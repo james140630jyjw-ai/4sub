@@ -5,7 +5,9 @@ const trackKoEl = document.getElementById("track-ko");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
+
 const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
+const videoClickBlocker = document.getElementById("video-click-blocker");
 
 console.log("subtitle player script loaded");
 
@@ -58,7 +60,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// 15초 티저 제한 (원하면 유지)
+// 15초 티저 제한 (유지)
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -68,10 +70,22 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 🔥 자막 전환: "자막 터치 레이어"에서만 처리
-//  - document / window 에는 어떤 pointer 이벤트도 안 건다
-//  - 영상 컨트롤(재생/일시정지)은 브라우저 기본 동작 그대로
-//  - 홀드/해제해도 비디오는 멈추지 않음
+// ⛔ 영상 상단부 클릭 차단 (멈춤 방지용)
+//  - 여기서는 아무 동작도 안 하고, 그냥 비디오로 이벤트가 못 가게 막기
+// ------------------------------
+function blockVideoClick(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  console.log("video-click-blocker: click blocked");
+}
+
+videoClickBlocker.addEventListener("pointerdown", blockVideoClick);
+videoClickBlocker.addEventListener("pointerup", blockVideoClick);
+videoClickBlocker.addEventListener("click", blockVideoClick);
+
+// ------------------------------
+// 💬 자막 전환: 자막 터치 레이어에서만 처리
 // ------------------------------
 subtitleTouchLayer.addEventListener("pointerdown", (e) => {
   if (e.pointerType === "mouse" && e.button !== 0) return;
