@@ -14,12 +14,10 @@
             flex-direction: column;
             align-items: center;
         }
-
         h1 {
             margin-top: 20px;
             margin-bottom: 10px;
         }
-
         video {
             width: 90%;
             max-width: 800px;
@@ -27,7 +25,6 @@
             background: black;
             border-radius: 10px;
         }
-
         #uploader {
             margin-top: 25px;
             padding: 15px;
@@ -35,12 +32,10 @@
             border-radius: 10px;
             text-align: center;
         }
-
         #uploader label {
             display: block;
             margin-bottom: 8px;
         }
-
         #uploader input {
             margin-bottom: 10px;
         }
@@ -50,17 +45,12 @@
 <body>
     <h1>Interactive Subtitle Switch Player</h1>
 
-    <!-- 🔥 기본 영상 + 자막 -->
     <video id="video" controls>
         <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-        <!-- *** 기본 언어: 영어 (default) *** -->
+        <!-- 영어만 남긴다 → 브라우저는 이걸 무조건 기본으로 선택 -->
         <track id="track-en" label="English" kind="subtitles" srclang="en"
                src="sample/sample_en.vtt" default>
-
-        <!-- *** 터치 / 클릭 시 나오는 한국어 (default 제거됨) *** -->
-        <track id="track-ko" label="Korean" kind="subtitles" srclang="ko"
-               src="sample/sample_ko.vtt">
     </video>
 
     <div id="uploader">
@@ -74,8 +64,6 @@
         <input type="file" id="upload-ko" accept=".vtt" />
     </div>
 
-    <!-- 스크립트 -->
     <script src="script.js"></script>
-
 </body>
 </html>
