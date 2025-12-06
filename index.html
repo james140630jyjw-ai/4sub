@@ -21,12 +21,11 @@
       margin-bottom: 16px;
     }
 
-    /* 🎥 16:9 영상 영역 */
+    /* 🎥 영상 영역 (검은 바 제거 완료) */
     .video-wrapper {
       position: relative;
       width: 90%;
       max-width: 800px;
-      aspect-ratio: 16 / 9;
       border-radius: 12px 12px 0 0;
       overflow: hidden;
       background: black;
@@ -34,104 +33,171 @@
 
     video {
       width: 100%;
-      height: 100%;
+      height: auto; /* 검은 바 사라지게 하는 핵심 */
       object-fit: cover;
       background: black;
-    }
-
-    /* ❗ Safari 자막이 사라지는 문제 해결: video::cue 삭제 */
-
-    /* 💬 영상 아래 자막 표시 바 */
-    #subtitle-bar {
-      width: 90%;
-      max-width: 800px;
-      min-height: 2.4em;
-      background: #000;
-      border-radius: 0 0 12px 12px;
-      padding: 6px 12px;
-      text-align: center;
-      font-size: 1rem;
-      line-height: 1.3;
-      color: #fff;
-      text-shadow: 0 0 4px #000;
-      user-select: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #subtitle-bar span {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    #hint {
-      margin-top: 4px;
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    /* 업로드 영역 */
-    #uploader {
-      margin-top: 20px;
-      background: #222;
-      padding: 16px;
-      width: 90%;
-      max-width: 800px;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-
-    #uploader h2 {
-      margin: 0 0 10px;
-      font-size: 16px;
-    }
-
-    #uploader label {
       display: block;
-      margin: 6px 0 2px;
     }
 
-    #uploader input {
+    /* 자막 스타일 */
+    .subtitle {
+      position: absolute;
+      bottom: 40px;
       width: 100%;
-      margin-bottom: 8px;
+      text-align: center;
+      font-size: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 12px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    /* 업로드 섹션 */
+    .upload-section {
+      width: 90%;
+      max-width: 800px;
+      background: #333;
+      padding: 20px;
+      margin-top: 8px;
+      border-radius: 10px;
+    }
+
+    .upload-section h2 {
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .upload-item {
+      margin-bottom: 16px;
     }
   </style>
 </head>
 
 <body>
+
   <h1>Interactive Subtitle Switch Player</h1>
 
   <div class="video-wrapper">
-    <video id="video" controls>
-      <source src="sample/sample_teaser.mp4" type="video/mp4" />
-
-      <!-- 브라우저 기본 자막 렌더링용 -->
-      <track id="track-en" label="English" kind="subtitles" srclang="en" src="sample/sample_en.vtt">
-      <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt">
+    <video id="video" controls crossorigin="anonymous">
+      <source id="videoSource" src="" type="video/mp4" />
     </video>
+
+    <div id="subtitleBox" class="subtitle" style="display:none;"></div>
   </div>
 
-  <!-- 영상 아래 자막 바 -->
-  <div id="subtitle-bar"><span></span></div>
-  <div id="hint">자막 줄을 꾹 누르면 영어, 떼면 한국어</div>
+  <p style="margin-top:10px; color:#bbb;">
+    자막 줄을 콕 누르면 영어, 데번 한국어
+  </p>
 
-  <!-- 업로드 영역 -->
-  <div id="uploader">
+  <div class="upload-section">
     <h2>Use Your Own Video / Subtitles</h2>
 
-    <label>🎬 Upload Video</label>
-    <input type="file" id="upload-video" accept="video/*">
+    <div class="upload-item">
+      📁 <strong>Upload Video</strong><br />
+      <input type="file" id="videoUpload" accept="video/mp4,video/webm" />
+    </div>
 
-    <label>🇺🇸 Upload English Subtitle (.vtt)</label>
-    <input type="file" id="upload-en" accept=".vtt">
+    <div class="upload-item">
+      🇺🇸 <strong>Upload English Subtitle (.vtt)</strong><br />
+      <input type="file" id="engSubUpload" accept=".vtt" />
+    </div>
 
-    <label>🇰🇷 Upload Korean Subtitle (.vtt)</label>
-    <input type="file" id="upload-ko" accept=".vtt">
+    <div class="upload-item">
+      🇰🇷 <strong>Upload Korean Subtitle (.vtt)</strong><br />
+      <input type="file" id="korSubUpload" accept=".vtt" />
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const video = document.getElementById("video");
+    const subtitleBox = document.getElementById("subtitleBox");
+
+    let engSubs = [];
+    let korSubs = [];
+    let activeSubs = null;
+
+    // 파일 업로드 핸들러
+    document.getElementById("videoUpload").addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        document.getElementById("videoSource").src = url;
+        video.load();
+      }
+    });
+
+    document.getElementById("engSubUpload").addEventListener("change", async function () {
+      const text = await this.files[0].text();
+      engSubs = parseVTT(text);
+      activeSubs = engSubs;
+    });
+
+    document.getElementById("korSubUpload").addEventListener("change", async function () {
+      const text = await this.files[0].text();
+      korSubs = parseVTT(text);
+    });
+
+    // VTT 파서
+    function parseVTT(vttText) {
+      const lines = vttText.split("\n");
+      const cues = [];
+
+      let start = null, end = null, text = "";
+
+      for (let line of lines) {
+        line = line.trim();
+
+        if (line.includes("-->")) {
+          const parts = line.split("-->");
+          start = toSeconds(parts[0]);
+          end = toSeconds(parts[1]);
+        } else if (line === "") {
+          if (start !== null && text !== "") {
+            cues.push({ start, end, text });
+            start = null;
+            end = null;
+            text = "";
+          }
+        } else if (!line.startsWith("WEBVTT")) {
+          text += (text ? "\n" : "") + line;
+        }
+      }
+
+      return cues;
+    }
+
+    function toSeconds(timeStr) {
+      const parts = timeStr.trim().split(":");
+      const sec = parseFloat(parts.pop());
+      const min = parseFloat(parts.pop());
+      const hr = parts.length ? parseFloat(parts.pop()) : 0;
+      return hr * 3600 + min * 60 + sec;
+    }
+
+    // 영상 재생에 따라 자막 업데이트
+    video.addEventListener("timeupdate", () => {
+      if (!activeSubs) return;
+
+      const t = video.currentTime;
+      const cue = activeSubs.find(c => t >= c.start && t <= c.end);
+
+      if (cue) {
+        subtitleBox.innerHTML = cue.text;
+        subtitleBox.style.display = "block";
+      } else {
+        subtitleBox.style.display = "none";
+      }
+    });
+
+    // 자막 박스를 클릭하면 영어 ↔ 한국어 전환
+    subtitleBox.addEventListener("click", () => {
+      if (activeSubs === engSubs && korSubs.length > 0) {
+        activeSubs = korSubs;
+      } else if (engSubs.length > 0) {
+        activeSubs = engSubs;
+      }
+    });
+  </script>
+
 </body>
 </html>
