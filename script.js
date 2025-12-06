@@ -26,7 +26,7 @@ function getTracks() {
   return { en, ko };
 }
 
-// ---- 영상 멈춤 방지 (맥북용) ----
+// ---- 영상 멈춤 방지 (맥북용)
 function keepPlaying() {
   if (video.paused && !video.ended) {
     const p = video.play();
@@ -36,7 +36,7 @@ function keepPlaying() {
   }
 }
 
-// ----- 자막 표시 함수 -----
+// ----- 자막 표시 함수
 function showEnglish() {
   const { en, ko } = getTracks();
   console.log("→ EN", en, ko);
@@ -51,12 +51,22 @@ function showKorean() {
   if (ko) ko.mode = "showing";
 }
 
-// ***** 기본 자막: 영어 *****
+// ***** 기본 자막을 진짜 영어로 강제하는 안정 버전 *****
 video.addEventListener("loadedmetadata", () => {
-  showEnglish();    // ← 여기만 showKorean() → showEnglish() 로 변경됨
+  const attemptDefault = () => {
+    const { en, ko } = getTracks();
+    if (en && ko && en.readyState === 2 && ko.readyState === 2) {
+      showEnglish();
+      console.log("기본 영어 자막 적용 완료");
+    } else {
+      // 트랙이 아직 초기화 중이면 조금 후에 다시 시도
+      setTimeout(attemptDefault, 50);
+    }
+  };
+  attemptDefault();
 });
 
-// ----- 15초 티저 제한 -----
+// ----- 15초 티저 제한
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
     video.pause();
@@ -64,23 +74,23 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ----- 자막 전환 + 강제 재생: pointer 이벤트 -----
+// ----- 자막 전환 + 강제 재생
 function handlePointerDown(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
-  showKorean();   // ← 누르는 동안 한국어
+  showKorean();
   keepPlaying();
 }
 
 function handlePointerUp(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
-  showEnglish();  // ← 손 떼면 다시 영어
+  showEnglish();
   keepPlaying();
 }
 
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("pointerup", handlePointerUp);
 
-// ----- 비디오의 기본 동작(play/pause 토글)만 막기 -----
+// ----- 비디오 기본 토글(play/pause)만 막기
 function blockVideoPointer(e) {
   e.preventDefault();
 }
@@ -90,7 +100,7 @@ video.addEventListener("mousedown", blockVideoPointer);
 video.addEventListener("mouseup", blockVideoPointer);
 video.addEventListener("click", blockVideoPointer);
 
-// ----- 업로드 기능 -----
+// ----- 업로드 기능
 uploadVideoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -101,7 +111,6 @@ uploadVideoInput.addEventListener("change", (e) => {
   video.play();
 });
 
-// 영어 자막 업로드
 uploadEnInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -112,7 +121,6 @@ uploadEnInput.addEventListener("change", (e) => {
   video.load();
 });
 
-// 한국어 자막 업로드
 uploadKoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
