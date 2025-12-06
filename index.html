@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interactive Subtitle Switch Player</title>
+  <title>Interactive Subtitle Player</title>
 
   <style>
     body {
@@ -21,13 +21,12 @@
       margin-bottom: 16px;
     }
 
-    /* 🎥 16:9 영상 영역 */
     .video-wrapper {
       position: relative;
       width: 90%;
       max-width: 800px;
       aspect-ratio: 16 / 9;
-      border-radius: 12px 12px 0 0;
+      border-radius: 12px;
       overflow: hidden;
       background: black;
     }
@@ -36,45 +35,20 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      background: black;
     }
 
-    /* 💬 영상 아래 자막 표시 바 */
-    #subtitle-bar {
-      position: relative;     /* ⭐ 클릭 레이어 승격 */
-      z-index: 9999;          /* ⭐ 비디오 위 클릭 우선권 */
-
-      width: 90%;
-      max-width: 800px;
-      min-height: 2.4em;
-      background: #000;
-      border-radius: 0 0 12px 12px;
-      padding: 6px 12px;
-      text-align: center;
-      font-size: 1rem;
-      line-height: 1.3;
-      color: #fff;
-      text-shadow: 0 0 4px #000;
-      user-select: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* 🔥 자막 위치에 겹치는 투명 터치 영역 */
+    #subtitle-touch-overlay {
+      position: absolute;
+      bottom: 8%;              /* 자막 위치에 맞게 아래쪽 */
+      left: 0;
+      width: 100%;
+      height: 22%;             /* 자막이 나타나는 영역 */
+      z-index: 9999;
+      pointer-events: auto;
+      background: transparent; /* 디버깅 시 rgba(255,0,0,0.2); */
     }
 
-    #subtitle-bar span {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    #hint {
-      margin-top: 4px;
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    /* 업로드 영역 */
     #uploader {
       margin-top: 20px;
       background: #222;
@@ -84,44 +58,25 @@
       border-radius: 10px;
       box-sizing: border-box;
     }
-
-    #uploader h2 {
-      margin: 0 0 10px;
-      font-size: 16px;
-    }
-
-    #uploader label {
-      display: block;
-      margin: 6px 0 2px;
-    }
-
-    #uploader input {
-      width: 100%;
-      margin-bottom: 8px;
-    }
   </style>
 </head>
 
 <body>
-  <h1>Interactive Subtitle Switch Player</h1>
+  <h1>Interactive Subtitle Player</h1>
 
   <div class="video-wrapper">
     <video id="video" controls>
       <source src="sample/sample_teaser.mp4" type="video/mp4" />
-
-      <!-- 브라우저 기본 자막 렌더링용 -->
       <track id="track-en" label="English" kind="subtitles" srclang="en" src="sample/sample_en.vtt">
       <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt">
     </video>
+
+    <!-- 🔥 실제 자막이 있는 위치에 터치 영역 -->
+    <div id="subtitle-touch-overlay"></div>
   </div>
 
-  <!-- 영상 아래 자막 바 -->
-  <div id="subtitle-bar"><span></span></div>
-  <div id="hint">자막 줄을 꾹 누르면 영어, 떼면 한국어</div>
-
-  <!-- 업로드 영역 -->
   <div id="uploader">
-    <h2>Use Your Own Video / Subtitles</h2>
+    <h2>Upload Video / Subtitles</h2>
 
     <label>🎬 Upload Video</label>
     <input type="file" id="upload-video" accept="video/*">
