@@ -1,17 +1,15 @@
 const video = document.getElementById("video");
+const subtitleTouch = document.getElementById("subtitle-touch-overlay");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
-const subtitleBar = document.getElementById("subtitle-bar");
 
-// PC/맥북 공통 안정 작동 — 자막 전환 기능
+// 자막 트랙 가져오기
 function getTracks() {
   const tracks = video.textTracks;
-  let en = null;
-  let ko = null;
+  let en = null, ko = null;
 
-  for (let i = 0; i < tracks.length; i++) {
-    const t = tracks[i];
+  for (let t of tracks) {
     const lang = (t.language || "").toLowerCase();
     const label = (t.label || "").toLowerCase();
 
@@ -33,79 +31,53 @@ function showKorean() {
   if (ko) ko.mode = "showing";
 }
 
-video.addEventListener("loadedmetadata", () => {
-  showKorean();
-});
+// 메타데이터 로드 후 기본 한국어
+video.addEventListener("loadedmetadata", () => showKorean());
 
-// (옵션) 15초 티저 기능
-video.addEventListener("timeupdate", () => {
-  if (video.currentTime > 15) {
-    video.pause();
-    video.currentTime = 0;
-  }
-});
-
-/* ============================
-   🔥 자막 바에서만 EN/KO 스위치
-=============================== */
-function subtitleDown(e) {
+// ===== 자막 터치 이벤트 (영상 아래 overlay만 처리) =====
+function down(e) {
   if (e.button !== undefined && e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
   showEnglish();
 }
 
-function subtitleUp(e) {
+function up(e) {
   if (e.button !== undefined && e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
   showKorean();
 }
 
-// pointer 이벤트 (최우선)
-subtitleBar.addEventListener("pointerdown", subtitleDown);
-subtitleBar.addEventListener("pointerup", subtitleUp);
-subtitleBar.addEventListener("pointercancel", subtitleUp);
+subtitleTouch.addEventListener("pointerdown", down);
+subtitleTouch.addEventListener("pointerup", up);
+subtitleTouch.addEventListener("pointercancel", up);
 
-// mouse fallback
-subtitleBar.addEventListener("mousedown", subtitleDown);
-subtitleBar.addEventListener("mouseup", subtitleUp);
-subtitleBar.addEventListener("mouseleave", subtitleUp);
+subtitleTouch.addEventListener("mousedown", down);
+subtitleTouch.addEventListener("mouseup", up);
+subtitleTouch.addEventListener("mouseleave", up);
 
-// touch fallback (맥북 터치패드 대응)
-subtitleBar.addEventListener("touchstart", subtitleDown, { passive: false });
-subtitleBar.addEventListener("touchend", subtitleUp, { passive: false });
-subtitleBar.addEventListener("touchcancel", subtitleUp, { passive: false });
+subtitleTouch.addEventListener("touchstart", down, { passive: false });
+subtitleTouch.addEventListener("touchend", up, { passive: false });
+subtitleTouch.addEventListener("touchcancel", up, { passive: false });
 
-/* ============================
-   🔥 video 영역은 아무것도 막지 않음
-   → 재생, 멈춤, 전체화면, 타임바 전부 정상 동작
-=============================== */
-
-/* ============================
-   업로드 기능
-=============================== */
+// ===== 업로드 기능 =====
 uploadVideoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const url = URL.createObjectURL(file);
-  video.src = url;
+  video.src = URL.createObjectURL(file);
   video.load();
   video.play();
 });
 
 uploadEnInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
+  const url = URL.createObjectURL(e.target.files[0]);
   document.getElementById("track-en").src = url;
   video.load();
 });
 
 uploadKoInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
+  const url = URL.createObjectURL(e.target.files[0]);
   document.getElementById("track-ko").src = url;
   video.load();
 });
