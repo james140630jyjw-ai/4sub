@@ -6,7 +6,7 @@ const uploadKoInput = document.getElementById("upload-ko");
 console.log("subtitle player script loaded");
 
 // ----------------------------------------------------------
-// ① 한국어 트랙을 동적으로 생성 (기본 영어 보장)
+// ① 한국어 트랙을 동적으로 생성 (기본 자막 = 영어 보장)
 // ----------------------------------------------------------
 let trackKoEl = document.createElement("track");
 trackKoEl.id = "track-ko";
@@ -15,6 +15,11 @@ trackKoEl.kind = "subtitles";
 trackKoEl.srclang = "ko";
 trackKoEl.src = "sample/sample_ko.vtt";
 video.appendChild(trackKoEl);
+
+// 한국어 트랙 로딩 감시 (중요!)
+trackKoEl.addEventListener("load", () => {
+  console.log("한국어 트랙 로딩 완료");
+});
 
 // ----------------------------------------------------------
 // EN/KO 트랙 객체 찾기
@@ -58,17 +63,26 @@ function showEnglish() {
 
 function showKorean() {
   const { en, ko } = getTracks();
-  console.log("→ KO");
+  console.log("→ KO (attempt)");
+
+  // 한국어 트랙이 아직 준비 안 됐으면 반복 체크
+  if (!ko || ko.readyState !== 2) {
+    console.log("KO track not ready yet, retrying…");
+    setTimeout(showKorean, 50);
+    return;
+  }
+
   if (en) en.mode = "hidden";
-  if (ko) ko.mode = "showing";
+  ko.mode = "showing";
 }
 
 // ----------------------------------------------------------
-// 기본 자막을 영어로 강제 (트랙 로딩 대기 포함)
+// 기본 자막 = 영어로 강제 (트랙 로딩까지 대기)
 // ----------------------------------------------------------
 video.addEventListener("loadedmetadata", () => {
   function forceEnglish() {
     const { en, ko } = getTracks();
+
     if (en && ko && en.readyState === 2 && ko.readyState === 2) {
       showEnglish();
       console.log("기본 영어 자막 적용 완료");
@@ -76,6 +90,7 @@ video.addEventListener("loadedmetadata", () => {
       setTimeout(forceEnglish, 50);
     }
   }
+
   forceEnglish();
 });
 
@@ -90,7 +105,7 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ----------------------------------------------------------
-// (핵심 수정) pointer 이벤트는 오직 document에서만 처리
+// pointer 이벤트 (자막 전환) → document 전체에서만 처리
 // ----------------------------------------------------------
 function handlePointerDown(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -108,8 +123,7 @@ document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("pointerup", handlePointerUp);
 
 // ----------------------------------------------------------
-// ⚠️ (중요) video 요소의 pointerdown/up/click 차단 코드 삭제됨
-//     -> 재생/일시정지 버튼 정상 작동
+// video 요소에서 pointer 차단 코드 제거 → 재생/일시정지 버튼 정상화
 // ----------------------------------------------------------
 
 // ----------------------------------------------------------
@@ -140,6 +154,6 @@ uploadKoInput.addEventListener("change", (e) => {
   if (!file) return;
 
   const url = URL.createObjectURL(file);
-  trackKoEl.src = url;
+  trackKoEl.src = url; // 동적 생성된 한국어 트랙
   video.load();
 });
