@@ -20,12 +20,28 @@
             margin-bottom: 10px;
         }
 
-        video {
+        .video-wrapper {
+            position: relative;
             width: 90%;
             max-width: 800px;
             margin-top: 20px;
+        }
+
+        video {
+            width: 100%;
             background: black;
             border-radius: 10px;
+        }
+
+        /* 자막 터치 레이어: 영상의 아래쪽 35%만 덮기 (자막 영역) */
+        #subtitle-touch-layer {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 35%; /* 자막 나오는 부분만 */
+            /* background: rgba(255, 0, 0, 0.1);  디버깅용 – 필요하면 잠깐 켜서 영역 확인 */
+            pointer-events: auto;
         }
 
         #uploader {
@@ -50,23 +66,28 @@
 <body>
     <h1>Interactive Subtitle Switch Player</h1>
 
-    <video id="video" controls>
-        <source src="sample/sample_teaser.mp4" type="video/mp4" />
+    <div class="video-wrapper">
+        <video id="video" controls>
+            <source src="sample/sample_teaser.mp4" type="video/mp4" />
 
-        <!-- 기본: 한국어 자막 -->
-        <track id="track-en"
-               label="English"
-               kind="subtitles"
-               srclang="en"
-               src="sample/sample_en.vtt">
+            <!-- 기본: 한국어 자막 -->
+            <track id="track-en"
+                   label="English"
+                   kind="subtitles"
+                   srclang="en"
+                   src="sample/sample_en.vtt">
 
-        <track id="track-ko"
-               label="Korean"
-               kind="subtitles"
-               srclang="ko"
-               src="sample/sample_ko.vtt"
-               default>
-    </video>
+            <track id="track-ko"
+                   label="Korean"
+                   kind="subtitles"
+                   srclang="ko"
+                   src="sample/sample_ko.vtt"
+                   default>
+        </video>
+
+        <!-- 자막 터치 전용 레이어 (영상 아래쪽 부분만) -->
+        <div id="subtitle-touch-layer"></div>
+    </div>
 
     <div id="uploader">
         <label>🎬 Upload Your Own Video</label>
