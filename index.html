@@ -35,18 +35,24 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      background: black;
     }
 
-    /* 🔥 자막 위치에 겹치는 투명 터치 영역 */
+    /* 🔥 자막 위치에 겹치는 투명 터치 영역
+       - 컨트롤바(맨 아래 15% 정도)는 절대 덮지 않도록 bottom을 높게 설정
+    */
     #subtitle-touch-overlay {
       position: absolute;
-      bottom: 8%;              /* 자막 위치에 맞게 아래쪽 */
       left: 0;
       width: 100%;
-      height: 22%;             /* 자막이 나타나는 영역 */
-      z-index: 9999;
+      height: 20%;      /* 자막 라인 높이 대략 */
+      bottom: 18%;      /* 컨트롤바 위에만 걸치도록 (컨트롤은 0~15% 구간) */
+      z-index: 5;
       pointer-events: auto;
-      background: transparent; /* 디버깅 시 rgba(255,0,0,0.2); */
+      background: transparent;
+      /* 위치 확인하고 싶으면 디버깅용으로 잠깐 켜도 됨:
+      background: rgba(0, 255, 0, 0.2);
+      */
     }
 
     #uploader {
@@ -57,6 +63,21 @@
       max-width: 800px;
       border-radius: 10px;
       box-sizing: border-box;
+    }
+
+    #uploader h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    #uploader label {
+      display: block;
+      margin: 6px 0 2px;
+    }
+
+    #uploader input {
+      width: 100%;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -71,7 +92,7 @@
       <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt">
     </video>
 
-    <!-- 🔥 실제 자막이 있는 위치에 터치 영역 -->
+    <!-- 🔥 실제 자막이 나오는 영역 위에 겹치는 터치 레이어 -->
     <div id="subtitle-touch-overlay"></div>
   </div>
 
