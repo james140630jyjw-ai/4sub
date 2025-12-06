@@ -5,7 +5,9 @@ const trackKoEl = document.getElementById("track-ko");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
+
 const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
+const videoClickBlocker = document.getElementById("video-click-blocker");
 
 console.log("subtitle player script loaded");
 
@@ -58,7 +60,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// 15초 티저 제한
+// 15초 티저 제한 (원래 있던 기능 유지)
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -68,62 +70,66 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 💬 자막 전환: 자막 터치 레이어에서만 처리
-//  - 이벤트를 비디오로 보내지 않기 위해 stopPropagation + preventDefault
+// ⛔ 영상 클릭 차단 레이어 활성/비활성
+//  - 처음(0초, 아직 재생 전)에는 비활성화 → 중앙 재생 버튼 클릭 가능
+//  - 재생이 시작되면 pointerEvents = 'auto' → 영상 위 클릭은 비디오에 안 닿음
+//  - 0초로 돌아와서 멈췄을 때만 다시 비활성화
 // ------------------------------
-subtitleTouchLayer.addEventListener("pointerdown", (e) => {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
+video.addEventListener("play", () => {
+  videoClickBlocker.style.pointerEvents = "auto";
+  console.log("video play → click blocker ON");
+});
+
+video.addEventListener("pause", () => {
+  if (video.currentTime === 0) {
+    videoClickBlocker.style.pointerEvents = "none";
+    console.log("video pause at 0 → click blocker OFF");
+  }
+});
+
+// ------------------------------
+// 💬 자막 전환: 자막 터치 레이어에서만 처리
+//  - Safari 호환을 위해 pointer + mouse + touch 모두 지원
+//  - 여기서 이벤트를 비디오로 보내지 않기 위해 stopPropagation + preventDefault
+// ------------------------------
+function subtitleHoldDown(e) {
+  // 오른쪽 클릭 등은 무시
+  if (e.type === "pointerdown" || e.type === "pointerup") {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+  }
 
   e.preventDefault();
   e.stopPropagation();
 
   showEnglish();
-});
+}
 
-subtitleTouchLayer.addEventListener("pointerup", (e) => {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
+function subtitleHoldUp(e) {
+  if (e.type === "pointerdown" || e.type === "pointerup") {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+  }
 
   e.preventDefault();
   e.stopPropagation();
 
   showKorean();
-});
+}
 
-// ------------------------------
-// 🎛 영상 클릭 제어:
-//  - 첫 클릭(처음 중앙 재생 버튼)은 허용
-//  - 맨 아래 컨트롤바 근처 클릭은 허용
-//  - 그 외 영역 클릭은 "멈추지 않도록" 막기
-// ------------------------------
-video.addEventListener("click", (e) => {
-  const rect = video.getBoundingClientRect();
-  const clickY = e.clientY;
+// 최신 브라우저: pointer 이벤트 우선 사용
+if ("onpointerdown" in window) {
+  subtitleTouchLayer.addEventListener("pointerdown", subtitleHoldDown);
+  subtitleTouchLayer.addEventListener("pointerup", subtitleHoldUp);
+  subtitleTouchLayer.addEventListener("pointercancel", subtitleHoldUp);
+} else {
+  // 구형 브라우저 / 일부 Safari 대응: mouse + touch
+  subtitleTouchLayer.addEventListener("mousedown", subtitleHoldDown);
+  subtitleTouchLayer.addEventListener("mouseup", subtitleHoldUp);
+  subtitleTouchLayer.addEventListener("mouseleave", subtitleHoldUp);
 
-  // 대략 컨트롤바 높이를 60px 정도로 가정
-  const isControlsZone = clickY > rect.bottom - 60;
-
-  // 처음 재생(중앙 큰 재생 버튼)일 가능성:
-  const isInitialClick = video.paused && video.currentTime === 0;
-
-  if (isInitialClick || isControlsZone) {
-    console.log("video click: allow (initial or controls)");
-    // 브라우저 기본 동작(재생/일시정지)에 맡김
-    return;
-  }
-
-  // 그 외 영역: 멈추지 않게 막기
-  console.log("video click: prevent pause from surface");
-  e.preventDefault();
-  e.stopPropagation();
-
-  // 혹시 이미 멈췄다면 다시 재생
-  if (video.paused && !video.ended) {
-    const p = video.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {});
-    }
-  }
-});
+  subtitleTouchLayer.addEventListener("touchstart", subtitleHoldDown, { passive: false });
+  subtitleTouchLayer.addEventListener("touchend", subtitleHoldUp, { passive: false });
+  subtitleTouchLayer.addEventListener("touchcancel", subtitleHoldUp, { passive: false });
+}
 
 // ------------------------------
 // 업로드 기능
