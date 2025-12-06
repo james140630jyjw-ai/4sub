@@ -2,6 +2,7 @@ const video = document.getElementById("video");
 const uploadVideoInput = document.getElementById("upload-video");
 const uploadEnInput = document.getElementById("upload-en");
 const uploadKoInput = document.getElementById("upload-ko");
+const subtitleBar = document.getElementById("subtitle-bar");
 
 console.log("subtitle player script loaded");
 
@@ -26,17 +27,6 @@ function getTracks() {
   return { en, ko };
 }
 
-// ---- 영상이 멈춰 있으면 다시 재생시키는 함수 (맥북용 응급처치) ----
-function keepPlaying() {
-  if (video.paused && !video.ended) {
-    const p = video.play();
-    // 일부 브라우저에서 promise를 던질 수 있어서 안전하게 처리
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {});
-    }
-  }
-}
-
 // ----- 자막 표시 함수 -----
 function showEnglish() {
   const { en, ko } = getTracks();
@@ -57,7 +47,7 @@ video.addEventListener("loadedmetadata", () => {
   showKorean();
 });
 
-// ----- 15초 티저 제한 -----
+// ----- 15초 티저 제한 (원하면 유지, 필요 없으면 이 블록 삭제해도 됨) -----
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
     video.pause();
@@ -65,31 +55,46 @@ video.addEventListener("timeupdate", () => {
   }
 });
 
-// ----- 자막 전환 + 강제 재생: pointer 이벤트 -----
-function handlePointerDown(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return; // 왼쪽 버튼만
+// ----- 자막 전환: "자막 바"에서만 동작하게 -----
+function handleSubtitleDown(e) {
+  // 마우스 오른쪽 버튼 등은 무시
+  if (e.type === "pointerdown" && e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.type === "mousedown" && e.button !== 0) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
   showEnglish();
-  keepPlaying(); // 맥북에서 down 시점에 멈춰 있으면 재생
 }
 
-function handlePointerUp(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
+function handleSubtitleUp(e) {
+  if (e.type === "pointerup" && e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.type === "mouseup" && e.button !== 0) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
   showKorean();
-  keepPlaying(); // up 시점에도 한 번 더 재생
 }
 
-document.addEventListener("pointerdown", handlePointerDown);
-document.addEventListener("pointerup", handlePointerUp);
+// 최신 브라우저: pointer 이벤트
+if ("onpointerdown" in window) {
+  subtitleBar.addEventListener("pointerdown", handleSubtitleDown);
+  subtitleBar.addEventListener("pointerup", handleSubtitleUp);
+  subtitleBar.addEventListener("pointercancel", handleSubtitleUp);
+} else {
+  // fallback: mouse / touch
+  subtitleBar.addEventListener("mousedown", handleSubtitleDown);
+  subtitleBar.addEventListener("mouseup", handleSubtitleUp);
+  subtitleBar.addEventListener("mouseleave", handleSubtitleUp);
 
-// ----- 비디오 기본 클릭 동작(play/pause 토글)만 막기 -----
-function blockVideoPointer(e) {
-  e.preventDefault(); // 기본 토글 끄기
+  subtitleBar.addEventListener("touchstart", handleSubtitleDown, { passive: false });
+  subtitleBar.addEventListener("touchend", handleSubtitleUp, { passive: false });
+  subtitleBar.addEventListener("touchcancel", handleSubtitleUp, { passive: false });
 }
-video.addEventListener("pointerdown", blockVideoPointer);
-video.addEventListener("pointerup", blockVideoPointer);
-video.addEventListener("mousedown", blockVideoPointer);
-video.addEventListener("mouseup", blockVideoPointer);
-video.addEventListener("click", blockVideoPointer);
+
+// ⚠️ 중요: 더 이상 document 전체나 video에 클릭/포인터 막는 코드 없음
+// → 다른 곳 터치는 원래대로 재생/일시정지/전체화면 다 잘 동작함
 
 // ----- 업로드 기능 -----
 
