@@ -34,7 +34,7 @@ function getTracks() {
 }
 
 // ------------------------------
-// 자막 표시
+// 자막 표시 함수
 // ------------------------------
 function showEnglish() {
   const { en, ko } = getTracks();
@@ -58,7 +58,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// 15초 티저 제한
+// 15초 티저 제한 (원하면 유지)
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -68,12 +68,12 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 자막 전환: 자막 터치 레이어에서만 처리
-//  - 영상 컨트롤(재생 버튼)은 건드리지 않음
-//  - 홀드 했다 떼어도 영상은 멈추지 않음
+// 🔥 자막 전환: "자막 터치 레이어"에서만 처리
+//  - document / window 에는 어떤 pointer 이벤트도 안 건다
+//  - 영상 컨트롤(재생/일시정지)은 브라우저 기본 동작 그대로
+//  - 홀드/해제해도 비디오는 멈추지 않음
 // ------------------------------
 subtitleTouchLayer.addEventListener("pointerdown", (e) => {
-  // 오른쪽 클릭 등은 무시
   if (e.pointerType === "mouse" && e.button !== 0) return;
   showEnglish();
 });
