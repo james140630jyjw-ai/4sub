@@ -6,7 +6,7 @@ const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
 const videoClickBlocker = document.getElementById("video-click-blocker");
 
 // --------------------------------
-// 자막 트랙 찾기
+// 자막 찾기
 // --------------------------------
 function getTracks() {
   const tracks = video.textTracks;
@@ -24,18 +24,20 @@ function getTracks() {
 }
 
 // --------------------------------
-// 자막 ON/OFF
+// 자막 스위치
 // --------------------------------
 function showEnglish() {
   const { en, ko } = getTracks();
   if (en) en.mode = "showing";
   if (ko) ko.mode = "hidden";
+  console.log("→ English");
 }
 
 function showKorean() {
   const { en, ko } = getTracks();
   if (en) en.mode = "hidden";
   if (ko) ko.mode = "showing";
+  console.log("→ Korean");
 }
 
 // 기본 한국어
@@ -44,7 +46,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // --------------------------------
-//  자막 터치 레이어 (홀드 전용)
+// 자막 레이어 터치 (pointer 이벤트)
 // --------------------------------
 function subtitleDown(e) {
   e.preventDefault();
@@ -63,7 +65,7 @@ subtitleTouchLayer.addEventListener("pointerup", subtitleUp);
 subtitleTouchLayer.addEventListener("pointercancel", subtitleUp);
 
 // --------------------------------
-//  영상 클릭 차단 (controls 위를 제외한 전체)
+// 영상 클릭 방지 (controls 제외)
 // --------------------------------
 videoClickBlocker.addEventListener("click", (e) => {
   e.preventDefault();
@@ -71,19 +73,67 @@ videoClickBlocker.addEventListener("click", (e) => {
 });
 
 // --------------------------------
-//  Safari가 멈추지 않게 보정
+// Safari 멈춤 보정
 // --------------------------------
 video.addEventListener("pause", () => {
   const bottom = video.getBoundingClientRect().bottom;
   const clickY = window.lastClickY || 0;
 
-  // 아래쪽 15% 영역에서 멈춘 건 정상
+  // 컨트롤 영역 클릭 시는 정상
   if (clickY > bottom - 60) return;
 
-  // 그 외는 멈추면 바로 재생
+  // 그 외는 다시 재생 처리
   if (!video.ended) video.play().catch(() => {});
 });
 
 window.addEventListener("pointerdown", (e) => {
   window.lastClickY = e.clientY;
+});
+
+// --------------------------------
+// 🔥 전체화면에서도 자막 스위치 작동시키기 위한 fullscreen 레이어
+// --------------------------------
+let fullscreenLayer = null;
+
+function createFullscreenLayer() {
+  const fsEl = document.fullscreenElement;
+  if (!fsEl) return;
+
+  fullscreenLayer = document.createElement("div");
+  fullscreenLayer.style.position = "fixed";
+  fullscreenLayer.style.left = "0";
+  fullscreenLayer.style.right = "0";
+  fullscreenLayer.style.bottom = "15%";
+  fullscreenLayer.style.height = "30%";
+  fullscreenLayer.style.zIndex = "999999";
+  fullscreenLayer.style.pointerEvents = "auto";
+
+  fullscreenLayer.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showEnglish();
+  });
+
+  fullscreenLayer.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showKorean();
+  });
+
+  document.body.appendChild(fullscreenLayer);
+}
+
+function removeFullscreenLayer() {
+  if (fullscreenLayer) {
+    fullscreenLayer.remove();
+    fullscreenLayer = null;
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement) {
+    createFullscreenLayer();
+  } else {
+    removeFullscreenLayer();
+  }
 });
