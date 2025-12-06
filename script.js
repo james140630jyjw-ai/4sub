@@ -79,11 +79,27 @@ video.addEventListener("timeupdate", () => {
 });
 
 // ------------------------------
-// 자막 전환: pointer 이벤트(PC + 맥)
+// 자막 전환: pointer 이벤트 (PC + 맥)
+//  - 단, video 위에서 시작한 홀드는 완전히 무시
 // ------------------------------
+let holdFromVideo = false;
+
+function isFromVideoTarget(e) {
+  if (e.target === video) return true;
+  if (e.target.closest && e.target.closest("video")) return true;
+  return false;
+}
+
 function handlePointerDown(e) {
   // 마우스라면 왼쪽 버튼만
   if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  // 비디오 위에서 시작된 홀드는 무시 (재생/일시정지랑 안 싸우게)
+  holdFromVideo = isFromVideoTarget(e);
+  if (holdFromVideo) {
+    console.log("pointerdown from video → ignore for subtitle switch");
+    return;
+  }
 
   showEnglish();
   keepPlaying();
@@ -91,6 +107,13 @@ function handlePointerDown(e) {
 
 function handlePointerUp(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
+
+  // 비디오에서 시작한 홀드였다면 그대로 무시
+  if (holdFromVideo) {
+    console.log("pointerup from video → ignore for subtitle switch");
+    holdFromVideo = false;
+    return;
+  }
 
   showKorean();
   keepPlaying();
