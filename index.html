@@ -38,19 +38,19 @@
       background: black;
     }
 
-    /* 🔥 자막 위치에 겹치는 투명 터치 영역
-       - 컨트롤바(맨 아래 15% 정도)는 절대 덮지 않도록 bottom을 높게 설정
+    /* 🔥 자막이 나오는 화면 하단 일부만 덮는 투명 터치 레이어
+       - 맨 아래 컨트롤바(재생버튼, 타임라인)는 덮지 않도록 bottom을 올려둠
     */
     #subtitle-touch-overlay {
       position: absolute;
       left: 0;
       width: 100%;
       height: 20%;      /* 자막 라인 높이 대략 */
-      bottom: 18%;      /* 컨트롤바 위에만 걸치도록 (컨트롤은 0~15% 구간) */
+      bottom: 18%;      /* 컨트롤바 0~15% 정도로 보고 그 위만 덮기 */
       z-index: 5;
       pointer-events: auto;
       background: transparent;
-      /* 위치 확인하고 싶으면 디버깅용으로 잠깐 켜도 됨:
+      /* 디버깅용:
       background: rgba(0, 255, 0, 0.2);
       */
     }
@@ -92,7 +92,7 @@
       <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt">
     </video>
 
-    <!-- 🔥 실제 자막이 나오는 영역 위에 겹치는 터치 레이어 -->
+    <!-- 자막 위 터치 레이어 -->
     <div id="subtitle-touch-overlay"></div>
   </div>
 
