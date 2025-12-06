@@ -39,10 +39,11 @@
       background: black;
     }
 
-    /* ❗ Safari 자막이 사라지는 문제 해결: video::cue 삭제 */
-
     /* 💬 영상 아래 자막 표시 바 */
     #subtitle-bar {
+      position: relative;     /* ⭐ 클릭 레이어 승격 */
+      z-index: 9999;          /* ⭐ 비디오 위 클릭 우선권 */
+
       width: 90%;
       max-width: 800px;
       min-height: 2.4em;
