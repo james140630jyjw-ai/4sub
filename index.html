@@ -20,12 +20,12 @@
     margin-top: 25px;
   }
 
-  /* 🎥 비디오 16:9 비율 고정 */
+  /* 🎥 16:9 비율 유지 */
   .video-wrapper {
     position: relative;
     width: 90%;
     max-width: 800px;
-    aspect-ratio: 16/9;  /* 🔥 Safari도 지원되는 최신 속성 */
+    aspect-ratio: 16 / 9;
     background: black;
     margin-top: 20px;
     border-radius: 12px;
@@ -35,43 +35,42 @@
   video {
     width: 100%;
     height: 100%;
-    object-fit: cover;  /* 비율 채우기 */
+    object-fit: cover;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 1;
   }
 
-  /* ⛔ 영상 클릭 차단 (controls 바깥 영역 클릭 방지) */
+  /* ⛔ 영상 상단 85% 클릭 차단 → 영상이 멈추는 문제 방지 */
   #video-click-blocker {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    height: 85%; /* 아래 15%만 비디오가 클릭 가능 */
+    height: 85%;
     z-index: 2;
     pointer-events: auto;
-    /* 디버깅용: background: rgba(255,0,0,0.1); */
   }
 
-  /* 💬 자막 터치 레이어 */
+  /* 💬 자막 스위치 레이어 (영상 아래쪽 30%) */
   #subtitle-touch-layer {
     position: absolute;
     left: 0;
     width: 100%;
-    bottom: 15%;   /* 컨트롤바 위 */
-    height: 30%;   /* 자막 위치 */
+    bottom: 15%;
+    height: 30%;
     z-index: 3;
     pointer-events: auto;
-    /* 디버깅: background: rgba(0,255,0,0.1); */
   }
 
-  /* 🎛 재생바를 비디오 높이에 포함시키지 않고 오버레이로 띄움 */
+  /* 🎛 Safari 영상 컨트롤바를 오버레이로 고정 */
   video::-webkit-media-controls-panel {
     position: absolute !important;
     bottom: 0 !important;
-    height: 15% !important; /* 우리가 비워둔 영역 안에서만 표시됨 */
+    height: 15% !important;
   }
+
 </style>
 </head>
 
@@ -90,8 +89,10 @@
            srclang="ko" src="sample/sample_ko.vtt" default />
   </video>
 
+  <!-- 클릭 차단 -->
   <div id="video-click-blocker"></div>
 
+  <!-- 자막 전환 -->
   <div id="subtitle-touch-layer"></div>
 
 </div>
