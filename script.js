@@ -13,7 +13,6 @@ function getTracks() {
 
   for (let i = 0; i < tracks.length; i++) {
     const t = tracks[i];
-    // language / label 둘 다 체크
     const lang = (t.language || "").toLowerCase();
     const label = (t.label || "").toLowerCase();
 
@@ -32,7 +31,7 @@ function showEnglish() {
   const { en, ko } = getTracks();
   console.log("→ EN", en, ko);
   if (en) en.mode = "showing";
-  if (ko) ko.mode = "hidden"; // 숨기기
+  if (ko) ko.mode = "hidden";
 }
 
 function showKorean() {
@@ -42,7 +41,7 @@ function showKorean() {
   if (ko) ko.mode = "showing";
 }
 
-// 처음에는 한국어 자막
+// 메타데이터 로드 후 기본은 한국어
 video.addEventListener("loadedmetadata", () => {
   showKorean();
 });
@@ -57,7 +56,7 @@ video.addEventListener("timeupdate", () => {
 
 // ----- 자막 전환: pointer 이벤트 -----
 function handlePointerDown(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return; // 왼쪽버튼만
+  if (e.pointerType === "mouse" && e.button !== 0) return; // 왼쪽 버튼만
   showEnglish();
 }
 
@@ -69,10 +68,16 @@ function handlePointerUp(e) {
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("pointerup", handlePointerUp);
 
-// ----- 비디오 클릭으로 play/pause 토글만 막기 -----
-video.addEventListener("click", (e) => {
-  e.preventDefault();
-});
+// ----- 비디오 기본 클릭/포인터 동작 막기 (멈춤 방지) -----
+function blockVideoPointer(e) {
+  e.preventDefault(); // 기본 재생/멈춤 토글만 막고, 버블은 살려둠
+}
+
+video.addEventListener("pointerdown", blockVideoPointer);
+video.addEventListener("pointerup", blockVideoPointer);
+video.addEventListener("mousedown", blockVideoPointer);
+video.addEventListener("mouseup", blockVideoPointer);
+video.addEventListener("click", blockVideoPointer);
 
 // ----- 업로드 기능 -----
 
@@ -93,12 +98,6 @@ uploadEnInput.addEventListener("change", (e) => {
   if (!file) return;
 
   const url = URL.createObjectURL(file);
-  const tracks = video.textTracks;
-  for (let i = 0; i < tracks.length; i++) {
-    if ((tracks[i].language || "").toLowerCase().startsWith("en")) {
-      tracks[i].mode = "hidden";
-    }
-  }
   const el = document.getElementById("track-en");
   el.src = url;
   video.load();
