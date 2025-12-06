@@ -38,6 +38,21 @@
       object-fit: cover;
       display: block;
       background: black;
+      z-index: 1;
+    }
+
+    /* 💬 자막 터치 레이어 – 영상 아래쪽 부분만 덮기 */
+    #subtitle-touch-layer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 12%;   /* 컨트롤바 위에 살짝 띄워둠 */
+      height: 30%;   /* 자막이 나오는 대략적인 영역 */
+      z-index: 2;
+      pointer-events: auto;
+      /* 디버깅용: 필요하면 잠깐 켜서 위치 확인
+      background: rgba(0, 255, 0, 0.15);
+      */
     }
 
     #uploader {
@@ -92,6 +107,9 @@
         default
       />
     </video>
+
+    <!-- 자막 홀드/해제 영역 -->
+    <div id="subtitle-touch-layer"></div>
   </div>
 
   <div id="uploader">
