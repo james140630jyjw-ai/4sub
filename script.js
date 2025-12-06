@@ -3,41 +3,50 @@ const trackEnEl = document.getElementById("track-en");
 const trackKoEl = document.getElementById("track-ko");
 
 const subtitleTouchLayer = document.getElementById("subtitle-touch-layer");
-const videoClickBlocker = document.getElementById("video-click-blocker");
+const uploadVideoInput = document.getElementById("upload-video");
+const uploadEnInput = document.getElementById("upload-en");
+const uploadKoInput = document.getElementById("upload-ko");
 
-// --------------------------------
-// 자막 찾기
-// --------------------------------
+console.log("subtitle player script loaded");
+
+// ------------------------------
+// 자막 트랙 찾기
+// ------------------------------
 function getTracks() {
   const tracks = video.textTracks;
-  let en = null, ko = null;
+  let en = null,
+    ko = null;
 
   for (let i = 0; i < tracks.length; i++) {
     const t = tracks[i];
     const lang = (t.language || "").toLowerCase();
     const label = (t.label || "").toLowerCase();
 
-    if (!en && (lang.startsWith("en") || label.includes("english"))) en = t;
-    if (!ko && (lang.startsWith("ko") || label.includes("korean"))) ko = t;
+    if (!en && (lang.startsWith("en") || label.includes("english"))) {
+      en = t;
+    }
+    if (!ko && (lang.startsWith("ko") || label.includes("korean"))) {
+      ko = t;
+    }
   }
   return { en, ko };
 }
 
-// --------------------------------
-// 자막 스위치
-// --------------------------------
+// ------------------------------
+// 자막 ON/OFF
+// ------------------------------
 function showEnglish() {
   const { en, ko } = getTracks();
   if (en) en.mode = "showing";
   if (ko) ko.mode = "hidden";
-  console.log("→ English");
+  console.log("→ EN");
 }
 
 function showKorean() {
   const { en, ko } = getTracks();
   if (en) en.mode = "hidden";
   if (ko) ko.mode = "showing";
-  console.log("→ Korean");
+  console.log("→ KO");
 }
 
 // 기본 한국어
@@ -45,95 +54,79 @@ video.addEventListener("loadedmetadata", () => {
   showKorean();
 });
 
-// --------------------------------
-// 자막 레이어 터치 (pointer 이벤트)
-// --------------------------------
+// ------------------------------
+// 15초 티저 제한 (원하면 유지, 필요 없으면 이 블록 삭제해도 됨)
+// ------------------------------
+video.addEventListener("timeupdate", () => {
+  if (video.currentTime > 15) {
+    video.pause();
+    video.currentTime = 0;
+  }
+});
+
+// ------------------------------
+// 자막 터치 레이어 (홀드 동안 영어, 떼면 한국어)
+//  - 여기서만 이벤트를 비디오까지 안 보내도록 막는다
+// ------------------------------
 function subtitleDown(e) {
+  // 오른쪽 클릭 무시
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
   e.preventDefault();
   e.stopPropagation();
   showEnglish();
 }
 
 function subtitleUp(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
   e.preventDefault();
   e.stopPropagation();
   showKorean();
 }
 
-subtitleTouchLayer.addEventListener("pointerdown", subtitleDown);
-subtitleTouchLayer.addEventListener("pointerup", subtitleUp);
-subtitleTouchLayer.addEventListener("pointercancel", subtitleUp);
+if ("onpointerdown" in window) {
+  subtitleTouchLayer.addEventListener("pointerdown", subtitleDown);
+  subtitleTouchLayer.addEventListener("pointerup", subtitleUp);
+  subtitleTouchLayer.addEventListener("pointercancel", subtitleUp);
+} else {
+  // 구형 브라우저용 fallback
+  subtitleTouchLayer.addEventListener("mousedown", subtitleDown);
+  subtitleTouchLayer.addEventListener("mouseup", subtitleUp);
+  subtitleTouchLayer.addEventListener("mouseleave", subtitleUp);
 
-// --------------------------------
-// 영상 클릭 방지 (controls 제외)
-// --------------------------------
-videoClickBlocker.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-});
-
-// --------------------------------
-// Safari 멈춤 보정
-// --------------------------------
-video.addEventListener("pause", () => {
-  const bottom = video.getBoundingClientRect().bottom;
-  const clickY = window.lastClickY || 0;
-
-  // 컨트롤 영역 클릭 시는 정상
-  if (clickY > bottom - 60) return;
-
-  // 그 외는 다시 재생 처리
-  if (!video.ended) video.play().catch(() => {});
-});
-
-window.addEventListener("pointerdown", (e) => {
-  window.lastClickY = e.clientY;
-});
-
-// --------------------------------
-// 🔥 전체화면에서도 자막 스위치 작동시키기 위한 fullscreen 레이어
-// --------------------------------
-let fullscreenLayer = null;
-
-function createFullscreenLayer() {
-  const fsEl = document.fullscreenElement;
-  if (!fsEl) return;
-
-  fullscreenLayer = document.createElement("div");
-  fullscreenLayer.style.position = "fixed";
-  fullscreenLayer.style.left = "0";
-  fullscreenLayer.style.right = "0";
-  fullscreenLayer.style.bottom = "15%";
-  fullscreenLayer.style.height = "30%";
-  fullscreenLayer.style.zIndex = "999999";
-  fullscreenLayer.style.pointerEvents = "auto";
-
-  fullscreenLayer.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showEnglish();
-  });
-
-  fullscreenLayer.addEventListener("pointerup", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showKorean();
-  });
-
-  document.body.appendChild(fullscreenLayer);
+  subtitleTouchLayer.addEventListener("touchstart", subtitleDown, { passive: false });
+  subtitleTouchLayer.addEventListener("touchend", subtitleUp, { passive: false });
+  subtitleTouchLayer.addEventListener("touchcancel", subtitleUp, { passive: false });
 }
 
-function removeFullscreenLayer() {
-  if (fullscreenLayer) {
-    fullscreenLayer.remove();
-    fullscreenLayer = null;
-  }
-}
+// ------------------------------
+// 업로드 기능
+// ------------------------------
+uploadVideoInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-document.addEventListener("fullscreenchange", () => {
-  if (document.fullscreenElement) {
-    createFullscreenLayer();
-  } else {
-    removeFullscreenLayer();
-  }
+  const url = URL.createObjectURL(file);
+  video.src = url;
+  video.load();
+  video.play().catch(() => {});
+});
+
+uploadEnInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  trackEnEl.src = url;
+  video.load();
+});
+
+uploadKoInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  trackKoEl.src = url;
+  video.load();
 });
