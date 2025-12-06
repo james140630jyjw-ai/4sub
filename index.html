@@ -36,14 +36,28 @@
       z-index: 1;
     }
 
-    /* 💬 자막 터치 레이어: 재생바 위쪽 30%만 덮기 */
+    /* ⛔ 영상 클릭 차단 레이어 (재생 시작 후 활성화, 컨트롤바는 비워둠) */
+    #video-click-blocker {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 15%;   /* 맨 아래 15%는 컨트롤바 영역으로 남겨둠 */
+      z-index: 2;
+      pointer-events: none; /* 처음엔 비활성화 → play 후 JS에서 활성화 */
+      /* 디버깅용
+      background: rgba(255, 0, 0, 0.1);
+      */
+    }
+
+    /* 💬 자막 터치 레이어: 컨트롤바 위 30%만 덮기 (자막 영역) */
     #subtitle-touch-layer {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: 15%;   /* 맨 아래 15%는 컨트롤바용으로 비워둔다 */
+      bottom: 15%;   /* 컨트롤바 위에서 시작 */
       height: 30%;   /* 그 위 30%를 자막 터치 영역으로 사용 */
-      z-index: 2;
+      z-index: 3;
       pointer-events: auto;
       /* 디버깅용
       background: rgba(0, 255, 0, 0.1);
@@ -94,6 +108,9 @@
         default
       />
     </video>
+
+    <!-- ⛔ 영상 클릭 차단 레이어 (재생 시작 후 활성화) -->
+    <div id="video-click-blocker"></div>
 
     <!-- 💬 자막 홀드/해제 영역 -->
     <div id="subtitle-touch-layer"></div>
