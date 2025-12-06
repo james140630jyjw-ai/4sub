@@ -26,11 +26,10 @@ function getTracks() {
   return { en, ko };
 }
 
-// ---- 영상이 멈춰 있으면 다시 재생시키는 함수 (맥북용 응급처치) ----
+// ---- 영상 멈춤 방지 (맥북용) ----
 function keepPlaying() {
   if (video.paused && !video.ended) {
     const p = video.play();
-    // 일부 브라우저에서 promise를 던질 수 있어서 안전하게 처리
     if (p && typeof p.catch === "function") {
       p.catch(() => {});
     }
@@ -52,9 +51,9 @@ function showKorean() {
   if (ko) ko.mode = "showing";
 }
 
-// 메타데이터 로드 후 기본은 한국어
+// ***** 기본 자막: 영어 *****
 video.addEventListener("loadedmetadata", () => {
-  showKorean();
+  showEnglish();    // ← 여기만 showKorean() → showEnglish() 로 변경됨
 });
 
 // ----- 15초 티저 제한 -----
@@ -67,23 +66,23 @@ video.addEventListener("timeupdate", () => {
 
 // ----- 자막 전환 + 강제 재생: pointer 이벤트 -----
 function handlePointerDown(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return; // 왼쪽 버튼만
-  showEnglish();
-  keepPlaying(); // 맥북에서 down 시점에 멈춰 있으면 재생
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  showKorean();   // ← 누르는 동안 한국어
+  keepPlaying();
 }
 
 function handlePointerUp(e) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
-  showKorean();
-  keepPlaying(); // up 시점에도 한 번 더 재생
+  showEnglish();  // ← 손 떼면 다시 영어
+  keepPlaying();
 }
 
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("pointerup", handlePointerUp);
 
-// ----- 비디오 기본 클릭 동작(play/pause 토글)만 막기 -----
+// ----- 비디오의 기본 동작(play/pause 토글)만 막기 -----
 function blockVideoPointer(e) {
-  e.preventDefault(); // 기본 토글 끄기
+  e.preventDefault();
 }
 video.addEventListener("pointerdown", blockVideoPointer);
 video.addEventListener("pointerup", blockVideoPointer);
@@ -92,8 +91,6 @@ video.addEventListener("mouseup", blockVideoPointer);
 video.addEventListener("click", blockVideoPointer);
 
 // ----- 업로드 기능 -----
-
-// 영상 업로드
 uploadVideoInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
