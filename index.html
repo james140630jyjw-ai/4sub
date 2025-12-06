@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Subtitle Switch Player</title>
+    <title>Interactive Dual Subtitle Player</title>
     <style>
         body {
             margin: 0;
@@ -14,10 +14,12 @@
             flex-direction: column;
             align-items: center;
         }
+
         h1 {
             margin-top: 20px;
             margin-bottom: 10px;
         }
+
         video {
             width: 90%;
             max-width: 800px;
@@ -25,6 +27,7 @@
             background: black;
             border-radius: 10px;
         }
+
         #uploader {
             margin-top: 25px;
             padding: 15px;
@@ -32,10 +35,12 @@
             border-radius: 10px;
             text-align: center;
         }
+
         #uploader label {
             display: block;
             margin-bottom: 8px;
         }
+
         #uploader input {
             margin-bottom: 10px;
         }
@@ -43,16 +48,16 @@
 </head>
 
 <body>
-    <h1>Interactive Subtitle Switch Player</h1>
+    <h1>Interactive Dual Subtitle Player</h1>
 
+    <!-- 🔥 기본 영상 + 자막 -->
     <video id="video" controls>
         <source src="sample/sample_teaser.mp4" type="video/mp4" />
-
-        <!-- 영어만 남긴다 → 브라우저는 이걸 무조건 기본으로 선택 -->
-        <track id="track-en" label="English" kind="subtitles" srclang="en"
-               src="sample/sample_en.vtt" default>
+        <track id="track-en" label="English" kind="subtitles" srclang="en" src="sample/sample_en.vtt">
+        <track id="track-ko" label="Korean" kind="subtitles" srclang="ko" src="sample/sample_ko.vtt" default>
     </video>
 
+    <!-- 🔥 업로드 기능 -->
     <div id="uploader">
         <label>🎬 Upload Your Own Video</label>
         <input type="file" id="upload-video" accept="video/*" /><br />
@@ -64,6 +69,8 @@
         <input type="file" id="upload-ko" accept=".vtt" />
     </div>
 
+    <!-- 🔥 스크립트 -->
     <script src="script.js"></script>
+
 </body>
 </html>
