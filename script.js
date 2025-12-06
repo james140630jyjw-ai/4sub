@@ -9,6 +9,9 @@ const uploadKoInput = document.getElementById("upload-ko");
 
 console.log("subtitle player script loaded");
 
+// 👉 자막 홀드를 방금 했는지 표시하는 플래그
+let recentSubtitleHold = false;
+
 // ------------------------------
 // 자막 트랙 찾기
 // ------------------------------
@@ -55,7 +58,7 @@ video.addEventListener("loadedmetadata", () => {
 });
 
 // ------------------------------
-// (옵션) 15초 티저 제한 – 필요 없으면 이 블록 삭제해도 됨
+// (옵션) 15초 티저 제한 – 필요 없으면 이 블록 삭제 가능
 // ------------------------------
 video.addEventListener("timeupdate", () => {
   if (video.currentTime > 15) {
@@ -66,14 +69,14 @@ video.addEventListener("timeupdate", () => {
 
 // ------------------------------
 // 자막 레이어: 홀드 동안 영어, 떼면 한국어
-//  - 비디오에는 이벤트 안 가게 막아서 재생/일시정지에 영향을 안 줌
 // ------------------------------
 function subtitleDown(e) {
-  // 마우스 오른쪽 버튼 등은 무시
   if (e.pointerType === "mouse" && e.button !== 0) return;
 
   e.preventDefault();
   e.stopPropagation();
+
+  recentSubtitleHold = true;      // ✅ 자막 홀드 시작
   showEnglish();
 }
 
@@ -82,7 +85,13 @@ function subtitleUp(e) {
 
   e.preventDefault();
   e.stopPropagation();
+
   showKorean();
+
+  // ✅ 잠깐 동안은 "자막 홀드 관련 클릭"으로 취급
+  setTimeout(() => {
+    recentSubtitleHold = false;
+  }, 150); // 0.15초면 충분
 }
 
 if ("onpointerdown" in window) {
@@ -99,6 +108,26 @@ if ("onpointerdown" in window) {
   subtitleTouchLayer.addEventListener("touchend", subtitleUp, { passive: false });
   subtitleTouchLayer.addEventListener("touchcancel", subtitleUp, { passive: false });
 }
+
+// ------------------------------
+// 🔥 video 클릭 보정
+//   - 방금 전까지 자막 홀드였으면, video를 멈추지 못하게 막는다
+// ------------------------------
+video.addEventListener("click", (e) => {
+  if (!recentSubtitleHold) return; // 일반 클릭은 그대로 두기
+
+  // 자막 홀드에서 올라온 클릭 → 비디오 멈추지 않게 처리
+  e.preventDefault();
+  e.stopPropagation();
+
+  // 혹시 이미 pause 상태로 들어갔다면 즉시 다시 play
+  if (video.paused && !video.ended) {
+    const p = video.play();
+    if (p && typeof p.catch === "function") {
+      p.catch(() => {});
+    }
+  }
+});
 
 // ------------------------------
 // 업로드 기능
